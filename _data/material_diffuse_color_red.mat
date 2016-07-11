@@ -1,0 +1,5 @@
+<Material Shader="shader_3d_diffuse_color.isl">
+	<MaterialValues>
+		<Value Name="user_diffuse_color" Type="vec4" Value="vec4(0.64, 0.15, 0.1, 1.0000)"/>
+	</MaterialValues>
+</Material>

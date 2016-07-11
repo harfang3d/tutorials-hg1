@@ -1,0 +1,12 @@
+{
+	"Material": {
+		"Shader": "@core/surfaces/diffuse.isl",
+		"MaterialValues": {
+			"Value": {
+				"Name": "diffuse_color",
+				"Type": "vec4",
+				"Value": "vec4(0.5882, 0.5882, 0.5882, 1.0000)"
+			}
+		}
+	}
+}
