@@ -1,13 +1,5 @@
 import gs
-import gs.plus
-import gs.plus.render as render
-import gs.plus.camera as camera
-import gs.plus.input as input
-import gs.plus.scene as scene
-import gs.plus.clock as clock
 from math import pi, cos, sin, asin
-
-gs.LoadPlugins(gs.get_default_plugins_path())
 
 
 def add_kapla_tower(scn, width, height, length, radius, level_count: int, x=0, y=0, z=0):
@@ -23,8 +15,8 @@ def add_kapla_tower(scn, width, height, length, radius, level_count: int, x=0, y
 
 			a = 0
 			while a < (2 * pi - error):
-				world = gs.Matrix4.TransformationMatrix(gs.Vector3(cos(a) * r + x, ring_y, sin(a) * r + z), gs.Vector3(0, -a + y_off, 0))
-				scene.add_physic_cube(scn, world, width, height, length, 2)
+				world = gs.Matrix4.TransformationMatrix((cos(a) * r + x, ring_y, sin(a) * r + z), (0, -a + y_off, 0))
+				plus.AddPhysicCube(scn, world, width, height, length, 2)
 				a += step
 
 		fill_ring(radius - length / 2, level_y, width, length / 2, pi / 2)
@@ -34,27 +26,30 @@ def add_kapla_tower(scn, width, height, length, radius, level_count: int, x=0, y
 		level_y += height
 
 
-gs.plus.create_workers()
+gs.LoadPlugins()
 
-render.init(1280, 720, "../pkg.core")
+plus = gs.GetPlus()
 
-scn = scene.new_scene()
+plus.CreateWorkers()
+plus.RenderInit(640, 400)
 
-cam = scene.add_camera(scn, gs.Matrix4.TranslationMatrix(gs.Vector3(0, 1, -10)))
-scene.add_light(scn, gs.Matrix4.RotationMatrix(gs.Vector3(0.6, -0.4, 0)), gs.Light.Model_Linear, 150)
-scene.add_light(scn, gs.Matrix4.RotationMatrix(gs.Vector3(0.6, pi, 0.2)), gs.Light.Model_Linear, diffuse=gs.Color(0.3, 0.3, 0.4))
-scene.add_physic_plane(scn)
+scn = plus.NewScene()
+
+cam = plus.AddCamera(scn, gs.Matrix4.TranslationMatrix((0, 1, -10)))
+plus.AddLight(scn, gs.Matrix4.RotationMatrix((0.6, -0.4, 0)), gs.Light.Model_Linear, 150)
+plus.AddLight(scn, gs.Matrix4.RotationMatrix((0.6, pi, 0.2)), gs.Light.Model_Linear, 0, True, (0.3, 0.3, 0.4))
+plus.AddPhysicPlane(scn)
 
 nodes = add_kapla_tower(scn, 0.5, 2, 2, 6, 16)
 
-fps = camera.fps_controller(0, 16, -80)
+fps = gs.FPSController(0, 16, -80)
 
-while not input.key_press(gs.InputDevice.KeyEscape):
-	dt_sec = clock.update()
-	fps.update_and_apply_to_node(cam, dt_sec)
+while not plus.KeyPress(gs.InputDevice.KeyEscape):
+	dt = plus.UpdateClock()
+	fps.UpdateAndApplyToNode(cam, dt)
 
-	scene.update_scene(scn, dt_sec)
+	plus.UpdateScene(scn, dt)
 
-	render.text2d(5, 25, "@%.2fFPS" % (1 / dt_sec))
-	render.text2d(5, 5, "Move around with QSZD, left mouse button to look around")
-	render.flip()
+	plus.Text2D(5, 25, "@%.2fFPS" % (1 / dt.to_sec()))
+	plus.Text2D(5, 5, "Move around with QSZD, left mouse button to look around")
+	plus.Flip()

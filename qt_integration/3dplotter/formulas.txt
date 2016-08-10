@@ -1,2 +1,0 @@
-cos(abs(x)+abs(y))*(abs(x)+abs(y)) * 0.1
-(x*y*y*y-y*x*x*x)*0.01

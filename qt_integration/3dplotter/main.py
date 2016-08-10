@@ -11,9 +11,6 @@ def on_log(msgs):
 
 gs.GetOnLogSignal().Connect(on_log)
 
-# mount the system file driver
-gs.GetFilesystem().Mount(gs.StdFileDriver("../../pkg.core"), "@core")
-
 # create the renderer
 renderer = gs.EglRenderer()
 

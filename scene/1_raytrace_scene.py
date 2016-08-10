@@ -1,39 +1,33 @@
 # Raytrace through a physic scene
 import gs
-import gs.plus.render as render
-import gs.plus.input as input
-import gs.plus.scene as scene
-import gs.plus.clock as clock
 
-gs.LoadPlugins(gs.get_default_plugins_path())
+gs.LoadPlugins()
 
-render.init(1024, 768, "../pkg.core")
+plus = gs.GetPlus()
+plus.RenderInit(1024, 768)
 
-scn = scene.new_scene(True)
+scn = plus.NewScene(True)
 
-cam = scene.add_camera(scn, gs.Matrix4.TranslationMatrix(gs.Vector3(0, 0, -3)))
-scene.add_light(scn, gs.Matrix4.TranslationMatrix(gs.Vector3(0, 7, 0)), gs.Light.Model_Linear)
-scene.add_plane(scn)
+cam = plus.AddCamera(scn, gs.Matrix4.TranslationMatrix((0, 0, -3)))
+plus.AddLight(scn, gs.Matrix4.TranslationMatrix((0, 7, 0)), gs.Light.Model_Linear)
+plus.AddPlane(scn)
 
-cube, cube_body = scene.add_physic_cube(scn, mass=0)
+cube, cube_body = plus.AddPhysicCube(scn, gs.Matrix4.Identity, 1, 1, 1, 0)
 cube_body.SetType(gs.RigidBodyKinematic)
 
 gfx = gs.SimpleGraphicSceneOverlay(False)
 scn.AddComponent(gfx)
 
 cube_angle = 0
-while not input.key_press(gs.InputDevice.KeyEscape):
-	dt_sec = clock.update()
+while not plus.KeyPress(gs.InputDevice.KeyEscape):
+	dt = plus.UpdateClock()
 
-	cube.GetTransform().SetRotation(gs.Vector3(cube_angle, cube_angle*2, 0))
+	cube.GetTransform().SetRotation(gs.Vector3(cube_angle, cube_angle * 2, 0))
 	cube_angle += 0.01
 
 	# launch front direction from the camera and see if I hit the cube
 	world = cam.GetTransform().GetWorld()
-	dir = world.GetZ()
-	dir_x = world.GetX()
-	dir_y = world.GetY()
-	pos = world.GetTranslation()
+	dir, dir_x, dir_y, pos = world.GetZ(), world.GetX(), world.GetY(), world.GetTranslation()
 
 	def draw_cross(p):
 		k = 0.01
@@ -48,6 +42,5 @@ while not input.key_press(gs.InputDevice.KeyEscape):
 			if has_hit:
 				draw_cross(hit.GetPosition())
 
-	scene.update_scene(scn, dt_sec)
-	render.text2d(5, 5, "Move around with QSZD, left mouse button to look around")
-	render.flip()
+	plus.UpdateScene(scn, dt)
+	plus.Flip()

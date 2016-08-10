@@ -6,7 +6,6 @@
 import gs
 
 gs.MountFileDriver(gs.StdFileDriver("../_data/"), "@data")
-gs.MountFileDriver(gs.StdFileDriver("../pkg.core/"), "@core")
 
 # initialize graphic and audio systems
 al = gs.ALMixer()
@@ -20,7 +19,8 @@ render_system.Initialize(gpu)
 
 # open movie and retrieve video format
 movie = gs.WebMMovie()
-movie.Open("@data/Blade Runner 1080p_vp8_256_vorbis_64.webm")
+if not movie.Open("@data/film_blender_ToS-4k-1920.webm"):
+	print("Unsupported movie format")
 
 video_format = movie.GetVideoData().GetFormat()
 
@@ -45,7 +45,7 @@ gpu.EnableDepthTest(False)  # disable depth testing so that we don't even need t
 channel = al.StreamData(movie.GetAudioData())
 
 # play until movie ends
-while not movie.IsEOF():
+while not movie.IsEOF() and not gs.GetKeyboard().WasPressed(gs.InputDevice.KeyEscape):
 	# fit the while output window
 	screen_size = gpu.GetCurrentOutputWindow().GetSize()
 	gpu.SetViewport(gs.fRect(0, 0, screen_size.x, screen_size.y))

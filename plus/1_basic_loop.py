@@ -1,8 +1,7 @@
 import gs
-import gs.plus.render as render
-import gs.plus.input as input
 
-render.init(400, 300, "../pkg.core")
+plus = gs.GetPlus()
+plus.RenderInit(400, 300)
 
-while not input.key_press(gs.InputDevice.KeyEscape):
-	render.flip()
+while not plus.KeyPress(gs.InputDevice.KeyEscape):
+	plus.Flip()

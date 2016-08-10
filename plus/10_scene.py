@@ -1,26 +1,22 @@
 import gs
-import gs.plus.render as render
-import gs.plus.camera as camera
-import gs.plus.input as input
-import gs.plus.scene as scene
-import gs.plus.clock as clock
 
-render.init(640, 400, "../pkg.core")
+plus = gs.GetPlus()
+plus.RenderInit(640, 400)
 
-scn = scene.new_scene()
+scn = plus.NewScene()
 
-cam = scene.add_camera(scn, gs.Matrix4.TranslationMatrix(gs.Vector3(0, 1, -10)))
-scene.add_light(scn, gs.Matrix4.TranslationMatrix(gs.Vector3(6, 4, -6)))
-scene.add_cube(scn, gs.Matrix4.TranslationMatrix(gs.Vector3(0, 0.5, 0)))
-scene.add_plane(scn)
+cam = plus.AddCamera(scn, gs.Matrix4.TranslationMatrix((0, 1, -10)))
+plus.AddLight(scn, gs.Matrix4.TranslationMatrix((6, 4, -6)))
+plus.AddCube(scn, gs.Matrix4.TranslationMatrix((0, 0.5, 0)))
+plus.AddPlane(scn)
 
-fps = camera.fps_controller(0, 2, -10)
+fps = gs.FPSController(0, 2, -10)
 
-while not input.key_press(gs.InputDevice.KeyEscape):
-	dt_sec = clock.update()
+while not plus.KeyPress(gs.InputDevice.KeyEscape):
+	dt = plus.UpdateClock()
 
-	fps.update_and_apply_to_node(cam, dt_sec)
+	fps.UpdateAndApplyToNode(cam, dt)
 
-	scene.update_scene(scn, dt_sec)
-	render.text2d(5, 5, "Move around with QSZD, left mouse button to look around")
-	render.flip()
+	plus.UpdateScene(scn, dt)
+	plus.Text2D(5, 5, "Move around with QSZD, left mouse button to look around")
+	plus.Flip()

@@ -3,13 +3,13 @@
 import os
 import gs
 
-gs.LoadPlugins(gs.get_default_plugins_path())
+gs.LoadPlugins()
 
 # mount the system file driver
 gs.MountFileDriver(gs.StdFileDriver())
 
 # load picture
-pic = gs.LoadPicture(os.path.join(os.getcwd(), "../_data/owl.jpg"))
+pic = gs.LoadPicture("../_data/owl.jpg")
 
 # draw a triangle over the picture
 pic.SetPenMode(gs.Picture.PenSolid)  # draw outline of the triangle
@@ -24,4 +24,4 @@ pic.ClosePolygon()  # end the path
 pic.DrawPath()  # draw the path
 
 # save the result
-gs.SavePicture(pic, os.path.join(os.getcwd(), "draw_vector.png"), "STB", "format:png")
+gs.SavePicture(pic, "draw_vector.png", "STB", "format:png")

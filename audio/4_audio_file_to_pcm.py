@@ -3,7 +3,7 @@
 import gs
 import os
 
-gs.LoadPlugins(gs.get_default_plugins_path())
+gs.LoadPlugins()
 
 gs.MountFileDriver(gs.StdFileDriver())
 

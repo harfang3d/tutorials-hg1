@@ -1,10 +1,9 @@
 import gs
-import gs.plus.render as render
-import gs.plus.input as input
 
-render.init(400, 300, "../pkg.core")
+plus = gs.GetPlus()
+plus.RenderInit(400, 300)
 
-while not input.key_press(gs.InputDevice.KeyEscape):
-	render.clear()
-	render.line2d(0, 0, 400, 300, gs.Color.Red, gs.Color.Blue)
-	render.flip()
+while not plus.KeyPress(gs.InputDevice.KeyEscape):
+	plus.Clear()
+	plus.Line2D(0, 0, 400, 300, gs.Color.Red, gs.Color.Blue)
+	plus.Flip()

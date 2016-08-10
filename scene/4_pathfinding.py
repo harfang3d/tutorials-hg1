@@ -1,22 +1,20 @@
 # Path finding sample, left click to change start point, right click to change end point.
 
 import gs
-import gs.plus.render as render
-import gs.plus.input as input
-import gs.plus.scene as scene
 
-gs.LoadPlugins(gs.get_default_plugins_path())
-width, height = 1280, 720
-render.init(width, height, "../pkg.core", 8)
+gs.LoadPlugins()
+
+plus = gs.GetPlus()
+plus.RenderInit(1280, 720, 8)
 
 gs.MountFileDriver(gs.StdFileDriver("../_data/"))
 
 # setup scene
-scn = scene.new_scene(False, False)
-scene.add_environment(scn, ambient_color=gs.Color(0.25, 0.25, 0.3))
+scn = plus.NewScene(False, False)
+plus.AddEnvironment(scn, gs.Color.Black, gs.Color(0.25, 0.25, 0.3))
 
-cam = scene.add_camera(scn, gs.Matrix4.TransformationMatrix(gs.Vector3(0, 65, -55), gs.Vector3(0.9, 0, 0)))
-lgt = scene.add_light(scn, gs.Matrix4.TransformationMatrix(gs.Vector3(40, 50, -60), gs.Vector3(0.75, -0.6, 0)), gs.Light.Model_Spot)
+cam = plus.AddCamera(scn, gs.Matrix4.TransformationMatrix(gs.Vector3(0, 65, -55), gs.Vector3(0.9, 0, 0)))
+lgt = plus.AddLight(scn, gs.Matrix4.TransformationMatrix(gs.Vector3(40, 50, -60), gs.Vector3(0.75, -0.6, 0)), gs.Light.Model_Spot)
 lgt.GetLight().SetConeAngle(0.49)
 lgt.GetLight().SetEdgeAngle(0.1)
 
@@ -33,7 +31,7 @@ nav_geo = gs.CreateNavigationGeometry(geo, nav_sys.GetConfig())
 nav = gs.Navigation()
 nav.SetGeometry(nav_geo)
 
-maze = scene.add_geometry(scn, "maze/maze.geo")
+maze = plus.AddGeometry(scn, "maze/maze.geo")
 maze.AddComponent(nav)
 
 # main loop
@@ -42,19 +40,19 @@ start, end = gs.Vector3(2, 1, -23), gs.Vector3(-3, 1, 23)
 
 font = gs.RasterFont("@core/fonts/default.ttf", 32)
 
-picker = gs.ScenePicking(render.get_render_system())
+picker = gs.ScenePicking(plus.GetRenderSystem())
 
-while not input.key_press(gs.InputDevice.KeyEscape):
+while not plus.KeyPress(gs.InputDevice.KeyEscape):
 	nav.FindPathTo(start, end, path)
 
-	scene.update_scene(scn, 1 / 60)
+	plus.UpdateScene(scn, gs.time(0))
 
 	# pick start/end points
 	if picker.Prepare(scn, False, True).get() == True:
-		mx, my = input.get_mouse_pos()
-		if input.mouse_button_down(gs.InputDevice.Button0):
+		mx, my = plus.GetMousePos()
+		if plus.MouseButtonDown(gs.InputDevice.Button0):
 			result, start = picker.PickWorld(scn, mx, my)
-		elif input.mouse_button_down(gs.InputDevice.Button1):
+		elif plus.MouseButtonDown(gs.InputDevice.Button1):
 			result, end = picker.PickWorld(scn, mx, my)
 
 	# display current path
@@ -71,4 +69,4 @@ while not input.key_press(gs.InputDevice.KeyEscape):
 	gfx.SetBlendMode(gs.BlendOpaque)
 	gfx.SetDepthTest(True)
 
-	render.flip()
+	plus.Flip()

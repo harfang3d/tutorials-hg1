@@ -4,7 +4,7 @@ import os
 import gs
 import time
 
-gs.LoadPlugins(gs.get_default_plugins_path())
+gs.LoadPlugins()
 
 # mount the system file driver
 gs.MountFileDriver(gs.StdFileDriver())
@@ -12,6 +12,8 @@ gs.MountFileDriver(gs.StdFileDriver())
 # create an OpenAL mixer and wrap it with the MixerAsync interface
 al = gs.MixerAsync(gs.ALMixer())
 al.Open()
+
+# start streaming
 future_channel = al.Stream(os.path.join(os.getcwd(), "../_data/skaven.it"))
 
 # future_channel contains a FutureInt, this means that it will contain the channel the stream is playing on once the

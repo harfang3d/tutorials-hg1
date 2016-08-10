@@ -1,29 +1,24 @@
 # Display a terrain scene with light atmospheric features
 
-import os
 import gs
-import gs.plus.render as render
-import gs.plus.camera as camera
-import gs.plus.scene as scene
-import gs.plus.clock as clock
 
-gs.LoadPlugins(gs.get_default_plugins_path())
+gs.LoadPlugins()
 
 # mount data folder
-pic = gs.MountFileDriver(gs.StdFileDriver(os.path.join(os.getcwd(), "../_data")), "@data")
+pic = gs.MountFileDriver(gs.StdFileDriver("../_data"), "@data")
 
 # create the renderer
-render.init(1280, 720, "../pkg.core", 4)
+plus = gs.GetPlus()
+plus.RenderInit(1280, 720, 4)
 
 # create scene
-scn = scene.new_scene(False, True)
-scene.add_environment(scn, gs.Color.Black, gs.Color.Black, gs.Color(0.85, 0.9, 1), 8000, 60000)
+scn = plus.NewScene(False, True)
+plus.AddEnvironment(scn, gs.Color.Black, gs.Color.Black, gs.Color(0.85, 0.9, 1), 8000, 60000)
 
-# fps camera
-cam = scene.add_camera(scn)
+# camera
+cam = plus.AddCamera(scn)
 cam.GetCamera().SetZNear(1)
 cam.GetCamera().SetZFar(100000)  # 100km
-fps = camera.fps_controller(0, 3000, -30000, 10, 100)
 
 # sky lighting
 sky = gs.RenderScript()
@@ -36,7 +31,7 @@ scn.AddComponent(sky)
 
 # load terrain
 terrain = gs.Terrain()
-terrain.SetSize(gs.Vector3(68767, 5760, 68767))
+terrain.SetSize((68767, 5760, 68767))
 terrain.SetHeightmap("@data/terrain/island.r16")
 terrain.SetHeightmapResolution(gs.iVector2(1024, 1024))
 terrain.SetMinPrecision(50)  # don't bother with a very fine grid given the low resolution heightmap in use
@@ -48,18 +43,17 @@ terrain_node.AddComponent(terrain)
 scn.AddNode(terrain_node)
 
 #
-while True:
-	dt = clock.get_dt()
+fps = gs.FPSController(0, 3000, -30000, 10, 100)
 
-	old_pos = gs.Vector3(fps.pos)
-	fps.update_and_apply_to_node(cam, dt)
-	speed = gs.Vector3.Dist(fps.pos, old_pos) / dt if dt > 0 else 0
+while not plus.KeyPress(gs.InputDevice.KeyEscape):
+	dt = plus.UpdateClock()
 
-	scene.update_scene(scn, dt)
+	old_pos = fps.GetPos()
+	fps.UpdateAndApplyToNode(cam, dt)
+	speed = gs.Vector3.Dist(fps.GetPos(), old_pos) / dt.to_sec() if dt.to_sec() > 0 else 0
 
-	render.text2d(5, 25, "Current speed: %d m/s" % int(speed))
-	render.text2d(5, 5, "Move around with QSZD, left mouse button to look around (hold shift to go faster)")
-	render.flip()
+	plus.UpdateScene(scn, dt)
 
-	clock.update()
-
+	plus.Text2D(5, 25, "Current speed: %d m/s" % int(speed))
+	plus.Text2D(5, 5, "Move around with QSZD, left mouse button to look around (hold shift to go faster)")
+	plus.Flip()

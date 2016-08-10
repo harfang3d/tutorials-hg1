@@ -3,9 +3,6 @@
 import os
 import gs
 
-# mount the system file driver
-gs.GetFilesystem().Mount(gs.StdFileDriver("../pkg.core"), "@core/")
-
 # create the renderer
 renderer = gs.EglRenderer()
 renderer.Open(480, 240)

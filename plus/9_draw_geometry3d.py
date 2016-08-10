@@ -1,23 +1,20 @@
 import gs
-import gs.plus.clock as clock
-import gs.plus.input as input
-import gs.plus.render as render
-import gs.plus.camera as camera
-import gs.plus.geometry as geometry
 
-render.init(640, 400, "../pkg.core")
+plus = gs.GetPlus()
+plus.RenderInit(640, 400)
 
-cube = render.create_geometry(geometry.create_cube(0.5, 2, 0.5))
+cube = plus.CreateGeometry(plus.CreateCube(0.5, 2, 0.5))
 
-fps = camera.fps_controller(0, 2, -10)
+fps = gs.FPSController(0, 2, -10)
 
-while not input.key_press(gs.InputDevice.KeyEscape):
-	fps.update(clock.update())
-	render.set_camera3d(fps.pos.x, fps.pos.y, fps.pos.z, fps.rot.x, fps.rot.y, fps.rot.z)
+while not plus.KeyPress(gs.InputDevice.KeyEscape):
+	fps.Update(plus.UpdateClock())
+	pos, rot = fps.GetPos(), fps.GetRot()
+	plus.SetCamera3D(pos.x, pos.y, pos.z, rot.x, rot.y, rot.z)
 
-	render.clear()
+	plus.Clear()
 	for z in range(-100, 100, 5):
 		for x in range(-100, 100, 5):
-			render.geometry3d(x, 0, z, cube)
-	render.text2d(5, 5, "Move around with QSZD, left mouse button to look around")
-	render.flip()
+			plus.Geometry3D(x, 0, z, cube)
+	plus.Text2D(5, 5, "Move around with QSZD, left mouse button to look around")
+	plus.Flip()

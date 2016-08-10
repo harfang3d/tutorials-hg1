@@ -4,7 +4,7 @@ import os
 import gs
 import time
 
-gs.LoadPlugins(gs.get_default_plugins_path())
+gs.LoadPlugins()
 
 # mount the system file driver
 gs.MountFileDriver(gs.StdFileDriver())

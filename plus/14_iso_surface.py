@@ -1,10 +1,5 @@
 import gs
 import math
-import gs.plus.clock as clock
-import gs.plus.input as input
-import gs.plus.render as render
-import gs.plus.camera as camera
-import gs.plus.scene as scene
 
 # create a few bench objects
 bench_fill_field = []
@@ -32,9 +27,9 @@ def draw_bench(perf_hist, color):
 	k_x = 1280 / 256  # display all values on screen
 	k_y = 720 / (16 * 1000)  # y goes up to 16ms
 	for i in range(size - 1):
-		render.line2d(i * k_x, perf_hist[i] * k_y, (i + 1) * k_x, perf_hist[i + 1] * k_y, color, color)
+		plus.Line2D(i * k_x, perf_hist[i] * k_y, (i + 1) * k_x, perf_hist[i + 1] * k_y, color, color)
 
-	render.text2d(1280 - 80, perf_hist[-1] * k_y + 10, "%.2f ms" % (perf_hist[-1] / 1000), color=color)
+	plus.Text2D(1280 - 80, perf_hist[-1] * k_y + 10, "%.2f ms" % (perf_hist[-1] / 1000), 16, color)
 
 
 def update_field(a):
@@ -73,10 +68,10 @@ def update_field(a):
 	if False:  # slow path through core geometry
 		geo = gs.CoreGeometry()
 		gs.IsoSurfaceToCoreGeometry(iso, geo)
-		geo = render.create_geometry(geo, False)
+		geo = plus.CreateGeometry(geo, False)
 	else:
 		geo = gs.RenderGeometry()
-		gs.IsoSurfaceToRenderGeometry(render.get_render_system(), iso, geo, mat)
+		gs.IsoSurfaceToRenderGeometry(plus.GetRenderSystem(), iso, geo, mat)
 
 	t_new = gs.time.now_us()
 	bench_create_geo.append(t_new - t_ref)
@@ -85,39 +80,42 @@ def update_field(a):
 
 #
 gs.MountFileDriver(gs.StdFileDriver("../_data/"), "@data/")
-render.init(1280, 720, "../pkg.core")
-mat = render.load_material("@core/materials/default.mat")
-fps = camera.fps_controller(w / 2, h / 2, -100)
+
+plus = gs.GetPlus()
+plus.RenderInit(1280, 720)
+
+mat = plus.LoadMaterial("@core/materials/default.mat")
+fps = gs.FPSController(w / 2, h / 2, -100)
 
 #
-scn = scene.new_scene()
-cam = scene.add_camera(scn, gs.Matrix4.TranslationMatrix(gs.Vector3(0, 1, -10)))
-scene.add_light(scn, gs.Matrix4.RotationMatrix(gs.Vector3(0.6, -0.4, 0)), gs.Light.Model_Linear, 300)
-scene.add_plane(scn)
+scn = plus.NewScene()
+cam = plus.AddCamera(scn, gs.Matrix4.TranslationMatrix((0, 1, -10)))
+plus.AddLight(scn, gs.Matrix4.RotationMatrix((0.6, -0.4, 0)), gs.Light.Model_Linear, 300)
+plus.AddPlane(scn)
 
 renderable_system = scn.GetRenderableSystem()
 
 a = 0
-while not input.key_press(gs.InputDevice.KeyEscape):
-	dt_sec = clock.update()
-	fps.update_and_apply_to_node(cam, dt_sec)
+while not plus.KeyPress(gs.InputDevice.KeyEscape):
+	dt = plus.UpdateClock()
+	fps.UpdateAndApplyToNode(cam, dt)
 
 	geo = update_field(a)
-	a += dt_sec * 0.5
+	a += dt.to_sec() * 0.5
 
 	renderable_system.DrawGeometry(geo, gs.Matrix4.Identity)
 
-	scene.update_scene(scn, dt_sec)
+	plus.UpdateScene(scn, dt)
 
 	draw_bench(bench_fill_field, gs.Color.Red)
 	draw_bench(bench_polygonise, gs.Color.Green)
 	draw_bench(bench_create_geo, gs.Color.Blue)
 
-	render.text2d(800, 45, "Update scalar field", color=gs.Color.Red)
-	render.text2d(800, 25, "Polygonise scalar field", color=gs.Color.Green)
-	render.text2d(800, 5, "Prepare render geometry", color=gs.Color.Blue)
+	plus.Text2D(800, 45, "Update scalar field", 16, gs.Color.Red)
+	plus.Text2D(800, 25, "Polygonise scalar field", 16, gs.Color.Green)
+	plus.Text2D(800, 5, "Prepare render geometry", 16, gs.Color.Blue)
 
-	render.text2d(5, 25, "Iso-surface @%.2fFPS (%d triangle)" % (1 / dt_sec, iso.GetTriangleCount()))
-	render.text2d(5, 5, "Move around with QSZD, left mouse button to look around")
+	plus.Text2D(5, 25, "Iso-surface @%.2fFPS (%d triangle)" % (1 / dt.to_sec(), iso.GetTriangleCount()))
+	plus.Text2D(5, 5, "Move around with QSZD, left mouse button to look around")
 
-	render.flip()
+	plus.Flip()

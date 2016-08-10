@@ -1,48 +1,45 @@
 import gs
-import gs.plus.clock as clock
-import gs.plus.input as input
-import gs.plus.render as render
-import gs.plus.camera as camera
-import gs.plus.geometry as geometry
 
-render.init(640, 400, "../pkg.core")
+plus = gs.GetPlus()
+plus.RenderInit(640, 400)
 
-cube = render.create_geometry(geometry.create_cube(0.5, 2, 0.5))
+cube = plus.CreateGeometry(plus.CreateCube(0.5, 2, 0.5))
 
-fps = camera.fps_controller(0, 2, -10)
-fps.rot.x = 0.5
+fps = gs.FPSController(0, 2, -10)
+fps.SetRot(gs.Vector3(0.5, 0, 0))
 
-size = render.get_renderer().GetCurrentOutputWindow().GetSize()
+renderer = plus.GetRenderer()
+size = renderer.GetCurrentOutputWindow().GetSize()
 
 def draw_view(viewport, cam_pos, cam_rot):
-	render.get_renderer().SetViewport(viewport)
-	render.get_renderer().SetClippingRect(viewport)
+	renderer.SetViewport(viewport)
+	renderer.SetClippingRect(viewport)
 
-	render.get_renderer().Clear(gs.Color.Black)
+	renderer.Clear(gs.Color.Black)
 
-	render.set_camera3d(cam_pos.x, cam_pos.y, cam_pos.z, cam_rot.x, cam_rot.y, cam_rot.z)
+	plus.SetCamera3D(cam_pos.x, cam_pos.y, cam_pos.z, cam_rot.x, cam_rot.y, cam_rot.z)
 
 	for z in range(-50, 50, 5):
 		for x in range(-50, 50, 5):
-			render.geometry3d(x, 0, z, cube)
+			plus.Geometry3D(x, 0, z, cube)
 
 
-while not input.key_press(gs.InputDevice.KeyEscape):
-
-	fps.update(clock.update())
+while not plus.KeyPress(gs.InputDevice.KeyEscape):
+	fps.Update(plus.UpdateClock())
 
 	# draw the full view at fps position
-	draw_view(gs.fRect(0, 0, size.x, size.y), fps.pos, fps.rot)
+	pos, rot = fps.GetPos(), fps.GetRot()
+	draw_view(gs.fRect(0, 0, size.x, size.y), pos, rot)
 
 	# process the view on screen
-	render.get_renderer().DrawFrame()
-	render.commit_2d()
-	render.commit_3d()
+	renderer.DrawFrame()
+	plus.Commit2D()
+	plus.Commit3D()
 
 	# draw the vignette on left bottom side with another point of view
-	draw_view(gs.fRect(0, 0, size.x*0.5, size.y*0.5), fps.pos + gs.Vector3(0, 15, 0), fps.rot)
+	draw_view(gs.fRect(0, 0, size.x*0.5, size.y*0.5), pos + gs.Vector3(0, 15, 0), rot)
 
-	render.text2d(5, 5, "Move around with QSZD, left mouse button to look around")
+	plus.Text2D(5, 5, "Move around with QSZD, left mouse button to look around")
 
 	# send the final rendered image on screen
-	render.flip()
+	plus.Flip()

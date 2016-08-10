@@ -2,9 +2,6 @@
 
 import gs
 
-# mount the system file driver
-gs.GetFilesystem().Mount(gs.StdFileDriver("../pkg.core"), "@core")
-
 # create the renderer and render system
 egl = gs.EglRenderer()
 egl.Open(860, 56)

@@ -5,13 +5,11 @@ import gs
 import gs.plus.geometry
 import math
 
-
 box_width = 5.5
 box_height = 5.6
 light_width = box_width * 0.25
 
-# mount the core & runtime package required for the rendering
-gs.GetFilesystem().Mount(gs.StdFileDriver("../pkg.core"), "@core")
+# mount the runtime package required for the rendering
 gs.GetFilesystem().Mount(gs.StdFileDriver("../_data/"))
 
 # create the renderer
