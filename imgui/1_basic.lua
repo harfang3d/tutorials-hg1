@@ -1,31 +1,50 @@
-gpu = gs.EglRenderer()
-gpu:Open(640, 480)
+hg = require("harfang")
 
-gui = gs.GetDearImGui()
+-- load Harfang plugins (renderer, image loader, etc...)
+hg.LoadPlugins()
+
+-- create the renderer
+renderer = hg.CreateRenderer()
+renderer:Open()
+
+-- open a new window
+win = hg.NewWindow(640, 480)
+
+-- create a new output surface for the newly opened window
+surface = renderer:NewOutputSurface(win)
+renderer:SetOutputSurface(surface)
+
+-- get keyboard device
+keyboard = hg.GetInputSystem():GetDevice("keyboard")
 
 check = true
 combo = 0
-color = gs.Color(1, 0, 1)
+items = hg.StringList({"Item 1", "Item 2", "Item 3"})
+color = hg.Color(1, 0, 1)
 
-while not gs.GetKeyboard():WasPressed(gs.InputDevice.KeyEscape) do
-	if gui:Begin("GUI") then
-		check = gui:Checkbox("Check", check)
+hg.ImGuiSetOutputSurface(surface)
 
-		if gui:CollapsingHeader("Header", true) then
-			if gui:Button("Button") then
+while hg.IsWindowOpen(win) and not keyboard:WasPressed(hg.KeyEscape) do
+	if hg.ImGuiBegin("GUI") then
+		_,check = hg.ImGuiCheckbox("Check", check)
+		if hg.ImGuiCollapsingHeader("Header", true) then
+			if hg.ImGuiButton("Button") then
 				print("Button pressed")
 			end
 
-			combo = gui:Combo("Combo", {"Item 1", "Item 2", "Item 3"}, combo)
-			color = gui:ColorButton(color)
+			_,combo = hg.ImGuiCombo("Combo", combo, items)
+			_,color = hg.ImGuiColorButton("Color", color)
 		end
 	end
+	hg.ImGuiEnd()
+	
+	renderer:Clear(hg.Color.Red)
+	renderer:ShowFrame()
+	hg.UpdateWindow(win)
 
-	gui:End()
-
-	gpu:Clear(gs.Color.Red)
-	gpu:DrawFrame()
-	gpu:ShowFrame()
-
-	gpu:UpdateOutputWindow()
+	hg.EndFrame()
 end
+
+renderer:DestroyOutputSurface(surface)
+hg.DestroyWindow(win)
+renderer:Close()

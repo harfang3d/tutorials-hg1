@@ -1,4 +1,4 @@
-import gs
+import harfang as hg
 from math import pi, cos, sin, asin
 
 
@@ -16,7 +16,7 @@ def add_kapla_tower(scn, width, height, length, radius, level_count: int, x=0, y
 
 			a = 0
 			while a < (2 * pi - error):
-				world = gs.Matrix4.TransformationMatrix(gs.Vector3(cos(a) * r + x, ring_y, sin(a) * r + z), gs.Vector3(0, -a + y_off, 0))
+				world = hg.Matrix4.TransformationMatrix(hg.Vector3(cos(a) * r + x, ring_y, sin(a) * r + z), hg.Vector3(0, -a + y_off, 0))
 				tower.append(plus.AddPhysicCube(scn, world, width, height, length, 2)[0])
 				a += step
 
@@ -35,9 +35,9 @@ def remove_kapla_tower(scn, tower):
 		scn.RemoveNode(node)
 
 
-gs.LoadPlugins()
+hg.LoadPlugins()
 
-plus = gs.GetPlus()
+plus = hg.GetPlus()
 
 # initialize rendering
 plus.CreateWorkers()
@@ -46,13 +46,13 @@ plus.RenderInit(1280, 720)
 # create the scene and retrieve its physic system
 scn = plus.NewScene()
 
-physic_system = scn.GetSystem("Physic")
+physic_system = scn.GetPhysicSystem()
 physic_system.SetTimestep(1 / 200)  # raise physic frequency for more stability
 
 # create default content
-cam = plus.AddCamera(scn, gs.Matrix4.TranslationMatrix(gs.Vector3(0, 1, -10)))
-plus.AddLight(scn, gs.Matrix4.RotationMatrix(gs.Vector3(0.6, -0.4, 0)), gs.Light.Model_Linear, 150)
-plus.AddLight(scn, gs.Matrix4.RotationMatrix(gs.Vector3(0.6, pi, 0.2)), gs.Light.Model_Linear, 0, False, gs.Color(0.3, 0.3, 0.4))
+cam = plus.AddCamera(scn, hg.Matrix4.TranslationMatrix(hg.Vector3(0, 1, -10)))
+plus.AddLight(scn, hg.Matrix4.RotationMatrix(hg.Vector3(0.6, -0.4, 0)), hg.LightModelLinear, 150)
+plus.AddLight(scn, hg.Matrix4.RotationMatrix(hg.Vector3(0.6, pi, 0.2)), hg.LightModelLinear, 0, False, hg.Color(0.3, 0.3, 0.4))
 plus.AddPhysicPlane(scn)
 
 # create the initial tower
@@ -61,21 +61,21 @@ tower_height = 16
 nodes = add_kapla_tower(scn, 0.5, 2, 2, tower_radius, tower_height)
 
 # create the FPS controller
-fps = gs.FPSController(0, 16, -80)
+fps = hg.FPSController(0, 16, -80)
 
 # enter the simulation loop
-while not plus.KeyPress(gs.InputDevice.KeyEscape):
+while not plus.IsAppEnded():
 	# handle inputs
 	old_tower_radius, old_tower_height = tower_radius, tower_height
 
-	if plus.KeyPress(gs.InputDevice.KeyF2):
+	if plus.KeyPress(hg.KeyF2):
 		tower_radius += 1
-	elif plus.KeyPress(gs.InputDevice.KeyF1):
+	elif plus.KeyPress(hg.KeyF1):
 		if tower_radius > 5:
 			tower_radius -= 1
-	elif plus.KeyPress(gs.InputDevice.KeyF4):
+	elif plus.KeyPress(hg.KeyF4):
 		tower_height += 1
-	elif plus.KeyPress(gs.InputDevice.KeyF3):
+	elif plus.KeyPress(hg.KeyF3):
 		if tower_height > 1:
 			tower_height -= 1
 
@@ -83,7 +83,7 @@ while not plus.KeyPress(gs.InputDevice.KeyEscape):
 		remove_kapla_tower(scn, nodes)
 		nodes = add_kapla_tower(scn, 0.5, 2, 2, tower_radius, tower_height)
 
-	if plus.KeyPress(gs.InputDevice.KeySpace):
+	if plus.KeyPress(hg.KeySpace):
 		world = cam.GetTransform().GetWorld()
 		ball, body = plus.AddPhysicSphere(scn, world)
 		body.ApplyLinearImpulse(world.GetZ() * 50)
@@ -97,7 +97,10 @@ while not plus.KeyPress(gs.InputDevice.KeyEscape):
 	plus.UpdateScene(scn, dt)
 
 	# display on-screen instructions
-	plus.Text2D(5, 25, "F1/F2 modify tower radius, F3/F4 modify tower height (%d blocks) @%.2fFPS" % (len(nodes), 1 / dt.to_sec()))
+	plus.Text2D(5, 25, "F1/F2 modify tower radius, F3/F4 modify tower height (%d blocks) @%.2fFPS" % (len(nodes), 1 / hg.time_to_sec_f(dt)))
 	plus.Text2D(5, 5, "Move around with QSZD, left mouse button to look around, space to shoot")
 
 	plus.Flip()
+	plus.EndFrame()
+
+plus.RenderUninit()

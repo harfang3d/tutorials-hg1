@@ -1,18 +1,18 @@
 # Access to a file inside a Zip archive
 
-import os
-import gs
+import harfang as hg
 
-archive_path = os.path.join(os.path.dirname(__file__), "../_data/hello.zip")
+archive_path = "_data/hello.zip"
 
 # mount a std file driver to access the archive
-gs.MountFileDriver(gs.StdFileDriver())
+hg.MountFileDriver(hg.StdFileDriver())
 
 # mount a Zip file driver connected to the archive on the prefix "zip:"
-gs.MountFileDriver(gs.ZipFileDriver(archive_path), "zip:")
+file = hg.GetFilesystem().Open(archive_path, hg.FileRead)
+hg.MountFileDriver(hg.ZipFileDriver(file), "zip:")
 
 # assert that we can find a file named "hello.txt" on the "zip:" prefix
 # ie. inside the archive connected to the ZipFileDriver "zip:" resolves to
-res = gs.GetFilesystem().Exists("zip:hello.txt")
+res = hg.GetFilesystem().Exists("zip:hello.txt")
 
-print("Can access 'hello.txt': %s" % str(res))
+print("Can access 'hello.txt' (expect OK): %s" % str(res))

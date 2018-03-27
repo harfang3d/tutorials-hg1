@@ -1,19 +1,23 @@
-plus = gs.GetPlus()
+hg = require("harfang")
+
+hg.LoadPlugins()
+
+plus = hg.GetPlus()
 plus:RenderInit(640, 400)
 
 cube = plus:CreateGeometry(plus:CreateCube(0.5, 2, 0.5))
 
-fps = gs.FPSController(0, 2, -10)
-fps:SetRot(gs.Vector3(0.5, 0, 0))
+fps = hg.FPSController(0, 2, -10)
+fps:SetRot(hg.Vector3(0.5, 0, 0))
 
 renderer = plus:GetRenderer()
-size = renderer:GetCurrentOutputWindow():GetSize()
+size = plus:GetRenderWindowSize(plus:GetRenderWindow())
 
 function draw_view(viewport, cam_pos, cam_rot)
 	renderer:SetViewport(viewport)
 	renderer:SetClippingRect(viewport)
 
-	renderer:Clear(gs.Color.Black)
+	renderer:Clear(hg.Color.Black)
 
 	plus:SetCamera3D(cam_pos.x, cam_pos.y, cam_pos.z, cam_rot.x, cam_rot.y, cam_rot.z)
 
@@ -24,12 +28,12 @@ function draw_view(viewport, cam_pos, cam_rot)
 	end
 end
 
-while not plus:KeyPress(gs.InputDevice.KeyEscape) do
+while not plus:IsAppEnded() do
 	fps:Update(plus:UpdateClock())
 
 	-- draw the full view at fps position
 	pos, rot = fps:GetPos(), fps:GetRot()
-	draw_view(gs.fRect(0, 0, size.x, size.y), pos, rot)
+	draw_view(hg.Rect(0, 0, size.x, size.y), pos, rot)
 
 	-- process the view on screen
 	renderer:DrawFrame()
@@ -37,10 +41,13 @@ while not plus:KeyPress(gs.InputDevice.KeyEscape) do
 	plus:Commit3D()
 
 	-- draw the vignette on left bottom side with another point of view
-	draw_view(gs.fRect(0, 0, size.x * 0.5, size.y * 0.5), pos + gs.Vector3(0, 15, 0), rot)
+	draw_view(hg.Rect(0, 0, size.x * 0.5, size.y * 0.5), pos + hg.Vector3(0, 15, 0), rot)
 
 	plus:Text2D(5, 5, "Move around with QSZD, left mouse button to look around")
 
 	-- send the final rendered image on screen
 	plus:Flip()
+	plus:EndFrame()
 end
+
+plus:RenderUninit()

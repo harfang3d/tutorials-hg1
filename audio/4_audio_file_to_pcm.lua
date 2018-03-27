@@ -1,20 +1,21 @@
 -- Convert from any supported audio file format to a PCM file
+hg = require("harfang")
 
-gs.LoadPlugins()
+hg.LoadPlugins()
 
-gs.MountFileDriver(gs.StdFileDriver())
+hg.MountFileDriver(hg.StdFileDriver())
 
 -- open input file as an audio data source
-src = gs.GetAudioIO():Open('../_data/skaven.it')
+src = hg.GetAudioIO():Open('../_data/skaven.it')
 
 -- open output file
-out = gs.GetFilesystem():Open('skaven.pcm', gs.ModeWrite)
+out = hg.GetFilesystem():Open('skaven.pcm', hg.FileWrite)
 
-pcm = gs.BinaryBlob()
+pcm = hg.BinaryData()
 
-while not src:IsEOF() do
+while src:GetState() ~= hg.AudioDataEnded do
 	-- get PCM frame to the binary blob
-	size = src:GetFrame(pcm)
+	size, timestamp = src:GetFrame(pcm)
 	-- output PCM frame to the file handle
 	out:Write(pcm)
 	-- reset the binary blob, do not free storage
@@ -25,8 +26,11 @@ end
 
 --[[
 -- extract all PCM data from the source as a binary blob
-sze, pcm = gs.ExtractAudioData(src)
+sze = hg.ExtractAudioData(src, pcm)
 
 -- save the complete PCM binary blob to a file
-gs.GetFilesystem():FileSave('skaven.pcm'), pcm)
+hg.GetFilesystem():FileSave('skaven.pcm', pcm)
 ]]--
+
+-- Note: the pcm file can be played using vlc with the following command line:
+-- vlc --demux=rawaud --rawaud-channels=2 --rawaud-samplerate=44000 skaven.pcm

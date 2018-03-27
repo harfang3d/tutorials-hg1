@@ -1,3 +1,7 @@
+hg = require("harfang")
+
+hg.LoadPlugins()
+
 function add_kapla_tower(scn, width, height, length, radius, level_count, x, y, z)
 	-- create a Kapla tower, return a list of created nodes
 	local level_y = y + height / 2
@@ -11,7 +15,7 @@ function add_kapla_tower(scn, width, height, length, radius, level_count, x, y, 
 
 			local a = 0
 			while a < (2 * math.pi - error) do
-				world = gs.Matrix4.TransformationMatrix({math.cos(a) * r + x, ring_y, math.sin(a) * r + z}, {0, -a + y_off, 0})
+				world = hg.Matrix4.TransformationMatrix(hg.Vector3(math.cos(a) * r + x, ring_y, math.sin(a) * r + z), hg.Vector3(0, -a + y_off, 0))
 				plus:AddPhysicCube(scn, world, width, height, length, 2)
 				a = a + step
 			end
@@ -25,31 +29,32 @@ function add_kapla_tower(scn, width, height, length, radius, level_count, x, y, 
 	end
 end
 
-gs.LoadPlugins()
-
-plus = gs.GetPlus()
+plus = hg.GetPlus()
 
 plus:CreateWorkers()
 plus:RenderInit(640, 400)
 
 scn = plus:NewScene()
 
-cam = plus:AddCamera(scn, gs.Matrix4.TranslationMatrix({0, 1, -10}))
-plus:AddLight(scn, gs.Matrix4.RotationMatrix({0.6, -0.4, 0}), gs.Light.Model_Linear, 150)
-plus:AddLight(scn, gs.Matrix4.RotationMatrix({0.6, math.pi, 0.2}), gs.Light.Model_Linear, 0, true, {0.3, 0.3, 0.4})
+cam = plus:AddCamera(scn, hg.Matrix4.TranslationMatrix(hg.Vector3(0, 1, -10)))
+plus:AddLight(scn, hg.Matrix4.RotationMatrix(hg.Vector3(0.6, -0.4, 0)), hg.LightModelLinear, 150)
+plus:AddLight(scn, hg.Matrix4.RotationMatrix(hg.Vector3(0.6, math.pi, 0.2)), hg.LightModelLinear, 0, true, hg.Color(0.3, 0.3, 0.4))
 plus:AddPhysicPlane(scn)
 
 nodes = add_kapla_tower(scn, 0.5, 2, 2, 6, 16, 0, 0, 0)
 
-fps = gs.FPSController(0, 16, -80)
+fps = hg.FPSController(0, 16, -80)
 
-while not plus:KeyPress(gs.InputDevice.KeyEscape) do
+while not plus:IsAppEnded() do
 	local dt = plus:UpdateClock()
 	fps:UpdateAndApplyToNode(cam, dt)
 
 	plus:UpdateScene(scn, dt)
 
-	plus:Text2D(5, 25, string.format("@%.2fFPS", 1 / dt:to_sec()))
+	plus:Text2D(5, 25, string.format("@%.2fFPS", 1 / hg.time_to_sec_f(dt)))
 	plus:Text2D(5, 5, "Move around with QSZD, left mouse button to look around")
 	plus:Flip()
+	plus:EndFrame()
 end
+
+plus:RenderUninit()

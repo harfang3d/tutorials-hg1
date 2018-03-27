@@ -2,48 +2,70 @@
 # For a more high-level example see the render_system tutorials
 
 import os
-import gs
+import harfang as hg
+
+# load Harfang plugins (renderer, image loader, etc...)
+hg.LoadPlugins()
 
 # mount the system file driver
-gs.MountFileDriver(gs.StdFileDriver())
+hg.MountFileDriver(hg.StdFileDriver())
 
 # create the renderer
-egl = gs.EglRenderer()
-egl.Open(480, 240)
+renderer = hg.CreateRenderer()
+renderer.Open()
+
+# open a new window
+win = hg.NewWindow(480, 240)
+
+# create a new output surface for the newly opened window
+surface = renderer.NewOutputSurface(win)
+renderer.SetOutputSurface(surface)
 
 # load a simple 2d shader outputting a single color
-shader = egl.LoadShader(os.path.join(os.getcwd(), "../_data/shader_2d_color.isl"))
+shader = renderer.LoadShader("_data/shader_2d_color.isl")
 
 # Create index buffer
-data = gs.BinaryBlob()
-data.WriteShorts([0, 1, 2])
+data = hg.BinaryData()
+data.WriteUInt16s([0,1,2])
 
-idx = egl.NewBuffer()
-egl.CreateBuffer(idx, data, gs.GpuBuffer.Index)
+idx = renderer.NewBuffer()
+renderer.CreateBuffer(idx, data, hg.GpuBufferIndex)
 
 # Create vertex buffer
-vtx_layout = gs.VertexLayout()
-vtx_layout.AddAttribute(gs.VertexAttribute.Position, 3, gs.ValueFloat)
+vtx_layout = hg.VertexLayout()
+vtx_layout.AddAttribute(hg.VertexPosition, 3, hg.VertexFloat)
 
-data = gs.BinaryBlob()
+data = hg.BinaryData()
+
 x, y = 0.5, 0.5
-data.WriteFloats([-x, -y, 0.5, -x, y, 0.5, x, y, 0.5])
+data.WriteFloats([-x,-y,0.5])
+data.WriteFloats([-x,y,0.5])
+data.WriteFloats([x,y,0.5])
 
-vtx = egl.NewBuffer()
-egl.CreateBuffer(vtx, data, gs.GpuBuffer.Vertex)
+vtx = renderer.NewBuffer()
+renderer.CreateBuffer(vtx, data, hg.GpuBufferVertex)
+
+# get keyboard device
+keyboard = hg.GetInputSystem().GetDevice("keyboard")
 
 # draw loop
 print("Close the renderer window or press Ctrl+C in this window to end")
 
-while egl.GetDefaultOutputWindow():
-	egl.Clear(gs.Color.Red)
+while hg.IsWindowOpen(win) and (not keyboard.WasPressed(hg.KeyEscape)):
+	renderer.Clear(hg.Color.Red)
 
-	egl.SetShader(shader)
-	egl.SetShaderFloat4("u_color", 0, 1, 0, 1)
+	renderer.SetShader(shader)
+	renderer.SetShaderFloat4("u_color", 0, 1, 0, 1)
 
-	gs.DrawBuffers(egl, 3, idx, vtx, vtx_layout)
+	hg.DrawBuffers(renderer, 3, idx, vtx, vtx_layout)
+	
+	renderer.DrawFrame()
+	renderer.ShowFrame()
 
-	egl.DrawFrame()
-	egl.ShowFrame()
+	hg.UpdateWindow(win)
 
-	egl.UpdateOutputWindow()
+	hg.EndFrame()
+
+renderer.DestroyOutputSurface(surface)
+hg.DestroyWindow(win)
+renderer.Close()

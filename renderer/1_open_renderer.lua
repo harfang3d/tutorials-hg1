@@ -1,12 +1,36 @@
--- initialize the renderer
+hg = require("harfang")
 
-egl = gs.EglRenderer()
-egl:Open(480, 240)
+-- load Harfang plugins (renderer, image loader, etc...)
+hg.LoadPlugins()
 
+-- create the renderer
+renderer = hg.CreateRenderer()
+renderer:Open()
+
+-- open a new window
+win = hg.NewWindow(480, 240)
+
+-- create a new output surface for the newly opened window
+surface = renderer:NewOutputSurface(win)
+renderer:SetOutputSurface(surface)
+
+-- get keyboard device
+keyboard = hg.GetInputSystem():GetDevice("keyboard")
+
+-- draw loop
 print("Close the renderer window or press Ctrl+C in this window to end")
 
-while egl:GetDefaultOutputWindow() ~= nil do
-	egl:Clear(gs.Color.Red)
-	egl:ShowFrame()
-	egl:UpdateOutputWindow()
+while hg.IsWindowOpen(win) and not keyboard:WasPressed(hg.KeyEscape) do
+	renderer:Clear(hg.Color.Red)
+
+	renderer:DrawFrame()
+	renderer:ShowFrame()
+
+	hg.UpdateWindow(win)
+
+	hg.EndFrame()
 end
+
+renderer:DestroyOutputSurface(surface)
+hg.DestroyWindow(win)
+renderer:Close()

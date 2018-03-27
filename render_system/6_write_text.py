@@ -1,33 +1,51 @@
 # How to draw text using TTF fonts with the render system
 
-import gs
+import harfang as hg
 
-# create the renderer and render system
-egl = gs.EglRenderer()
-egl.Open(860, 56)
+# load Harfang plugins (renderer, image loader, etc...)
+hg.LoadPlugins()
 
-sys = gs.RenderSystem()
-sys.Initialize(egl)
+# create the renderer
+renderer = hg.CreateRenderer()
+renderer.Open()
+
+# open a new window
+win = hg.NewWindow(860, 200)
+
+# create a new output surface for the newly opened window
+surface = renderer.NewOutputSurface(win)
+renderer.SetOutputSurface(surface)
+
+# initialize the render system, which is used to draw through the renderer
+render_system = hg.RenderSystem()
+render_system.Initialize(renderer)
 
 # create the font object
-font = gs.RasterFont("@core/fonts/default.ttf", 48, 512)
+font = hg.RasterFont("@core/fonts/default.ttf", 48, 512)
 
 # set default render states
-egl.Set2DMatrices()
-egl.EnableBlending(True)
-egl.EnableDepthTest(False)
+renderer.Set2DMatrices()
+renderer.EnableBlending(True)
+renderer.EnableDepthTest(False)
 
-while egl.GetDefaultOutputWindow():
-	egl.Clear(gs.Color.Black)
+# get keyboard device
+keyboard = hg.GetInputSystem().GetDevice("keyboard")
+
+while hg.IsWindowOpen(win) and (not keyboard.WasPressed(hg.KeyEscape)):
+	renderer.Clear(hg.Color.Black)
 
 	# draw baseline
-	sys.DrawLineAutoRGB(1, [gs.Vector3(0, 10, 0.5), gs.Vector3(1000, 10, 0.5)], [gs.Color.Red, gs.Color.Red])
+	render_system.DrawLineAuto(1, [hg.Vector3(0, 10, 0.5), hg.Vector3(1000, 10, 0.5)], [hg.Color.Red, hg.Color.Red])
 	# draw text
-	font.Write(sys, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", gs.Vector3(0, 10, 0.5))
+	font.Write(render_system, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", hg.Matrix4.TranslationMatrix(hg.Vector3(0, 10, 0.5)))
 
-	sys.DrawRasterFontBatch()
+	render_system.DrawRasterFontBatch()
 
-	egl.ShowFrame()
-	egl.UpdateOutputWindow()
+	renderer.DrawFrame()
+	renderer.ShowFrame()
+
+	hg.UpdateWindow(win)
+
+	hg.EndFrame()
 
 font = None

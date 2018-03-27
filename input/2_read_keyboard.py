@@ -1,18 +1,28 @@
 # How to read from the keyboard
 
-import gs
+import harfang as hg
+
+hg.LoadPlugins()
+
+plus = hg.GetPlus()
+plus.RenderInit(400, 300)
 
 # retrieve the keyboard device
-keyboard = gs.GetInputSystem().GetDevice("keyboard")
+keyboard = hg.GetInputSystem().GetDevice("keyboard")
 
 print("Press 'X' to exit")
 
-while True:
+while not plus.IsAppEnded():
 	# catch the exit key
-	if keyboard.WasPressed(gs.InputDevice.KeyX):
+	if keyboard.WasPressed(hg.KeyX):
 		break
 
 	# log key presses
-	for key in range(gs.InputDevice.KeyLast):
+	for key in range(hg.KeyLast):
 		if keyboard.WasPressed(key):
 			print("Keyboard key pressed: %d" % key)
+
+	plus.Flip()
+	plus.EndFrame()
+
+plus.RenderUninit()

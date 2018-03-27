@@ -1,20 +1,22 @@
 # How to read values from a game controller
 
-import gs
+import harfang as hg
 
-renderer = gs.EglRenderer()
-renderer.Open(480, 240)
+hg.LoadPlugins()
 
-device = gs.GetInputSystem().GetDevice("xinput0")
+plus = hg.GetPlus()
+plus.RenderInit(400, 300)
+
+device = hg.GetInputSystem().GetDevice("xinput.port0")
 
 # continue while the window is open
-while renderer.GetDefaultOutputWindow():
+while not plus.IsAppEnded():
 	# check if left button is down
-	for i in range(14):
-		if device.WasButtonPressed(gs.InputDevice.Button0 + i):
+	for i in range(hg.Button0, hg.ButtonLast):
+		if device.WasButtonPressed(i):
 			print("%d was pressed" % i)
 
-	# update window
-	renderer.DrawFrame()
-	renderer.ShowFrame()
-	renderer.UpdateOutputWindow()
+	plus.Flip()
+	plus.EndFrame()
+
+plus.RenderUninit()
