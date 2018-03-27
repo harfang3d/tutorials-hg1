@@ -1,9 +1,14 @@
-import gs
+import harfang as hg
 
-plus = gs.GetPlus()
+hg.LoadPlugins()
+
+plus = hg.GetPlus()
 plus.RenderInit(400, 300)
 
-while not plus.KeyPress(gs.InputDevice.KeyEscape):
+while not plus.IsAppEnded():
 	plus.Clear()
-	plus.Plot2D(200, 150, gs.Color.Green)
+	plus.Plot2D(200, 150, hg.Color.Green)
 	plus.Flip()
+	plus.EndFrame()
+
+plus.RenderUninit()

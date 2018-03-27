@@ -1,3 +1,7 @@
+hg = require("harfang")
+
+hg.LoadPlugins()
+
 function add_kapla_tower(scn, width, height, length, radius, level_count, x, y, z)
 	-- create a Kapla tower, return a list of created nodes
 	local tower = {}
@@ -12,7 +16,7 @@ function add_kapla_tower(scn, width, height, length, radius, level_count, x, y, 
 
 			local a = 0
 			while a < (2 * math.pi - error) do
-				local world = gs.Matrix4.TransformationMatrix({math.cos(a) * r + x, ring_y, math.sin(a) * r + z}, {0, -a + y_off, 0})
+				local world = hg.Matrix4.TransformationMatrix(hg.Vector3(math.cos(a) * r + x, ring_y, math.sin(a) * r + z), hg.Vector3(0, -a + y_off, 0))
 				table.insert(tower, plus:AddPhysicCube(scn, world, width, height, length, 2)[1])
 				a = a + step
 			end
@@ -35,9 +39,7 @@ function remove_kapla_tower(scn, tower)
 	end
 end
 
-gs.LoadPlugins()
-
-plus = gs.GetPlus()
+plus = hg.GetPlus()
 
 -- initialize rendering
 plus:CreateWorkers()
@@ -46,13 +48,13 @@ plus:RenderInit(1280, 720)
 -- create the scene and retrieve its physic system
 scn = plus:NewScene()
 
-physic_system = scn:GetSystem("Physic")
+physic_system = scn:GetPhysicSystem()
 physic_system:SetTimestep(1 / 200) -- raise physic frequency for more stability
 
 -- create default content
-cam = plus:AddCamera(scn, gs.Matrix4.TranslationMatrix({0, 1, -10}))
-plus:AddLight(scn, gs.Matrix4.RotationMatrix({0.6, -0.4, 0}), gs.Light.Model_Linear, 150)
-plus:AddLight(scn, gs.Matrix4.RotationMatrix({0.6, math.pi, 0.2}), gs.Light.Model_Linear, 0, false, {0.3, 0.3, 0.4})
+cam = plus:AddCamera(scn, hg.Matrix4.TranslationMatrix(hg.Vector3(0, 1, -10)))
+plus:AddLight(scn, hg.Matrix4.RotationMatrix(hg.Vector3(0.6, -0.4, 0)), hg.LightModelLinear, 150)
+plus:AddLight(scn, hg.Matrix4.RotationMatrix(hg.Vector3(0.6, math.pi, 0.2)), hg.LightModelLinear, 0, false, hg.Color(0.3, 0.3, 0.4))
 plus:AddPhysicPlane(scn)
 
 -- create the initial tower
@@ -61,22 +63,22 @@ tower_height = 16
 nodes = add_kapla_tower(scn, 0.5, 2, 2, tower_radius, tower_height, 0, 0, 0)
 
 -- create the FPS controller
-fps = gs.FPSController(0, 16, -80)
+fps = hg.FPSController(0, 16, -80)
 
 -- enter the simulation loop
-while not plus:KeyPress(gs.InputDevice.KeyEscape) do
+while not plus:IsAppEnded() do
 	-- handle inputs
 	local old_tower_radius, old_tower_height = tower_radius, tower_height
 
-	if plus:KeyPress(gs.InputDevice.KeyF2) then
+	if plus:KeyPress(hg.KeyF2) then
 		tower_radius = tower_radius + 1
-	elseif plus:KeyPress(gs.InputDevice.KeyF1) then
+	elseif plus:KeyPress(hg.KeyF1) then
 		if tower_radius > 5 then
 			tower_radius = tower_radius - 1
 		end
-	elseif plus:KeyPress(gs.InputDevice.KeyF4) then
+	elseif plus:KeyPress(hg.KeyF4) then
 		tower_height = tower_height + 1
-	elseif plus:KeyPress(gs.InputDevice.KeyF3) then
+	elseif plus:KeyPress(hg.KeyF3) then
 		if tower_height > 1 then
 			tower_height = tower_height - 1
 		end
@@ -87,7 +89,7 @@ while not plus:KeyPress(gs.InputDevice.KeyEscape) do
 		nodes = add_kapla_tower(scn, 0.5, 2, 2, tower_radius, tower_height, 0, 0, 0)
 	end
 
-	if plus:KeyPress(gs.InputDevice.KeySpace) then
+	if plus:KeyPress(hg.KeySpace) then
 		world = cam:GetTransform():GetWorld()
 		ball, body = plus:AddPhysicSphere(scn, world)
 		body:ApplyLinearImpulse(world:GetZ() * 50)
@@ -102,8 +104,11 @@ while not plus:KeyPress(gs.InputDevice.KeyEscape) do
 	plus:UpdateScene(scn, dt)
 
 	-- display on-screen instructions
-	plus:Text2D(5, 25, string.format("F1/F2 modify tower radius, F3/F4 modify tower height (%d blocks) @%.2fFPS", #nodes, 1 / dt:to_sec()))
+	plus:Text2D(5, 25, string.format("F1/F2 modify tower radius, F3/F4 modify tower height (%d blocks) @%.2fFPS", #nodes, 1 / hg.time_to_sec_f(dt)))
 	plus:Text2D(5, 5, "Move around with QSZD, left mouse button to look around, space to shoot")
 
 	plus:Flip()
+	plus:EndFrame()
 end
+
+plus:RenderUninit()

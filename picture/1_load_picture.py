@@ -1,14 +1,17 @@
 # Load a picture and print its dimensions
 
 import os
-import gs
+import harfang as hg
 
-gs.LoadPlugins()
+hg.LoadPlugins()
 
 # mount the system file driver
-gs.MountFileDriver(gs.StdFileDriver())
+hg.MountFileDriver(hg.StdFileDriver())
 
 # load picture and display informations
-pic = gs.LoadPicture("../_data/owl.jpg")
-
-print("Picture dimensions: %dx%d" % (pic.GetWidth(), pic.GetHeight()))
+pic = hg.Picture()
+ok = hg.LoadPicture(pic, "_data/owl.jpg")
+if not ok:
+	print("Failed to load image!")
+else:
+	print("Picture dimensions: %dx%d" % (pic.GetWidth(), pic.GetHeight()))

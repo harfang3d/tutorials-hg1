@@ -1,74 +1,83 @@
 -- path finding sample, left click to change start point, right click to change end point.
+hg = require("harfang")
 
-gs.LoadPlugins()
+hg.LoadPlugins()
 
-plus = gs.GetPlus()
-plus:RenderInit(1280, 720, 8)
+hg.MountFileDriver(hg.StdFileDriver("_data/"))
 
-gs.MountFileDriver(gs.StdFileDriver("../_data/"))
+resolution = hg.Vector2(1280, 720)
+antialiasing = 4
+
+plus = hg.GetPlus()
+plus:RenderInit(resolution.x, resolution.y, antialiasing)
 
 -- setup scene
 scn = plus:NewScene(false, false)
-plus:AddEnvironment(scn, gs.Color.Black, gs.Color(0.25, 0.25, 0.3))
 
-cam = plus:AddCamera(scn, gs.Matrix4.TransformationMatrix({0, 65, -55}, {0.9, 0, 0}))
-lgt = plus:AddLight(scn, gs.Matrix4.TransformationMatrix({40, 50, -60}, {0.75, -0.6, 0}), gs.Light.Model_Spot)
+plus:AddEnvironment(scn,hg.Color.Black, hg.Color(0.25, 0.25, 0.3))
+
+cam = plus:AddCamera(scn, hg.Matrix4.TransformationMatrix(hg.Vector3(0, 65, -55), hg.Vector3(0.9, 0, 0)))
+lgt = plus:AddLight(scn, hg.Matrix4.TransformationMatrix(hg.Vector3(40, 50, -60), hg.Vector3(0.75, -0.6, 0)), hg.LightModelSpot)
 lgt:GetLight():SetConeAngle(0.49)
 lgt:GetLight():SetEdgeAngle(0.1)
 
-gfx = gs.SimpleGraphicSceneOverlay(false)
+gfx = hg.SimpleGraphicSceneOverlay(false)
 scn:AddComponent(gfx)
 
 -- create the navigation system and component
-nav_sys = scn:AddSystem(gs.NavigationSystem())
+nav_sys = hg.NavigationSystem()
 nav_sys:SetDebugVisuals(false)
+scn:AddSystem(nav_sys)
 
-geo = gs.LoadCoreGeometry("maze/maze.geo")
-nav_geo = gs.CreateNavigationGeometry(geo, nav_sys:GetConfig())
+geo = hg.LoadGeometry("maze/maze.geo")
+nav_geo = hg.CreateNavigationGeometry(geo, nav_sys:GetConfig())
 
-nav = gs.Navigation()
+nav = hg.Navigation()
 nav:SetGeometry(nav_geo)
 
 maze = plus:AddGeometry(scn, "maze/maze.geo")
 maze:AddComponent(nav)
 
 -- main loop
-path = gs.NavigationPath()
-start, endpoint = gs.Vector3(2, 1, -23), gs.Vector3(-3, 1, 23)
+start, endpoint = hg.Vector3(2, 1, -23), hg.Vector3(-3, 1, 23)
 
-font = gs.RasterFont("@core/fonts/default.ttf", 32)
+font = hg.RasterFont("@core/fonts/default.ttf", 32)
 
-picker = gs.ScenePicking(plus:GetRenderSystem())
+picker = hg.ScenePicking(plus:GetRenderSystem())
 
-while not plus:KeyPress(gs.InputDevice.KeyEscape) do
-	nav:FindPathTo(start, endpoint, path)
-
-	plus:UpdateScene(scn, gs.time(0))
+while not plus:IsAppEnded() do
+	ok, path = nav:FindPathTo(start, endpoint)
+	local dt = plus:UpdateClock()
+	plus:UpdateScene(scn, dt)
 
 	-- pick start/end points
 	if picker:Prepare(scn, false, true):get() == true then
 		local mx, my = plus:GetMousePos()
-		if plus:MouseButtonDown(gs.InputDevice.Button0) then
+		my = resolution.y - my
+		if plus:MouseButtonDown(hg.Button0) then
 			result, start = picker:PickWorld(scn, mx, my)
-		elseif plus:MouseButtonDown(gs.InputDevice.Button1) then
+		elseif plus:MouseButtonDown(hg.Button1) then
 			result, endpoint = picker:PickWorld(scn, mx, my)
 		end
 	end
 
 	-- display current path
-	points = path:GetPoints()
-	for i = 1, #points - 1 do
-		local a, b = points[i], points[i + 1]
-		gfx:Line(a.x, a.y, a.z, b.x, b.y, b.z, gs.Color.Yellow, gs.Color.Yellow)
+	if ok then
+		for i = 1, path.point:size()-1 do
+			local a, b = path.point:at(i-1), path.point:at(i)
+			gfx:Line(a.x, a.y, a.z, b.x, b.y, b.z, hg.Color.Yellow, hg.Color.Yellow)
+		end
 	end
-
 	-- label start/end points
 	gfx:SetDepthTest(false)
-	gfx:SetBlendMode(gs.BlendAlpha)
-	gfx:Text(start.x, start.y, start.z, ".Start", gs.Color.White, font, 0.05)
-	gfx:Text(endpoint.x, endpoint.y, endpoint.z, ".End", gs.Color.White, font, 0.05)
-	gfx:SetBlendMode(gs.BlendOpaque)
+	gfx:SetBlendMode(hg.BlendAlpha)
+	gfx:Text(start.x, start.y, start.z, ".Start", hg.Color.White, font, 0.05)
+	gfx:Text(endpoint.x, endpoint.y, endpoint.z, ".End", hg.Color.White, font, 0.05)
+	gfx:SetBlendMode(hg.BlendOpaque)
 	gfx:SetDepthTest(true)
 
 	plus:Flip()
+	plus:EndFrame()
 end
+
+plus:RenderUninit()

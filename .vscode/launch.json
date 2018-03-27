@@ -1,0 +1,31 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Run Lua Tutorial",
+			"type": "lua",
+			"request": "launch",
+			"stopOnEntry": false,
+			"cwd": "${workspaceRoot}",
+			"runtimeExecutable": "d:/gs-fabgen/dist/lua/lua.exe",
+			"runtimeArgs": "${file}",
+			"console": "utf8"
+		},
+		{
+			"name": "Run Python Tutorial",
+			"type": "python",
+			"request": "launch",
+			"stopOnEntry": false,
+			"pythonPath": "c:/Python35-32/python.exe",
+			"program": "${file}",
+			"cwd": "${workspaceRoot}",
+			"env": {},
+			"envFile": "${workspaceRoot}/.env",
+			"debugOptions": [
+				"WaitOnAbnormalExit",
+				"WaitOnNormalExit",
+				"RedirectOutput"
+			]
+		}
+	]
+}

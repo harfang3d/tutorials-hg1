@@ -1,3 +1,7 @@
+hg = require("harfang")
+
+hg.LoadPlugins()
+
 -- create a few bench objects
 bench_fill_field = {}
 bench_polygonise = {}
@@ -6,13 +10,13 @@ bench_create_geo = {}
 -- setup iso field
 w, h, d = 100, 60, 30
 
-field = gs.BinaryBlob()
+field = hg.BinaryData()
 field:Grow(w * h * d)
 for i = 1, w * h * d do
 	field:WriteFloat(0)
 end
 
-iso = gs.IsoSurface()
+iso = hg.IsoSurface()
 
 function draw_bench(perf_hist, color)
 	local size = #perf_hist
@@ -38,7 +42,7 @@ function update_field(a)
 		field:WriteFloatAt(v, o)
 	end
 
-	local t_ref = gs.time.now_us()
+	local t_ref = hg.time_to_us_f(hg.time_now())
 	for i = 1, 200 do
 		local a_rad = i * (math.pi / 180) * 2
 
@@ -49,18 +53,18 @@ function update_field(a)
 		write_to_field(x, y, z, 6)
 	end
 
-	gs.BinaryBlobBlur3d(field, w, h, d)
+	hg.BinaryDataBlur3d(field, w, h, d)
 
-	local t_new = gs.time.now_us()
+	local t_new = hg.time_to_us_f(hg.time_now())
 	table.insert(bench_fill_field, t_new - t_ref)
 
 	-- polygonise
 	t_ref = t_new
 
-	iso:Clear(false) -- keep storage to minimize heap allocations
-	gs.PolygoniseIsoSurface(w, h, d, field, 1, iso)
+	iso:Clear()
+	hg.PolygoniseIsoSurface(w-2, h-2, d-2, field, 1, iso)
 
-	t_new = gs.time.now_us()
+	t_new = hg.time_to_us_f(hg.time_now())
 	table.insert(bench_polygonise, t_new - t_ref)
 
 	-- convert to render geometry
@@ -68,59 +72,62 @@ function update_field(a)
 
 	local geo
 	if false then -- slow path through core geometry
-		geo = gs.CoreGeometry()
-		gs.IsoSurfaceToCoreGeometry(iso, geo)
+		geo = hg.CoreGeometry()
+		hg.IsoSurfaceToCoreGeometry(iso, geo)
 		geo = plus:CreateGeometry(geo, false)
 	else
-		geo = gs.RenderGeometry()
-		gs.IsoSurfaceToRenderGeometry(plus:GetRenderSystem(), iso, geo, mat)
+		geo = hg.RenderGeometry()
+		hg.IsoSurfaceToRenderGeometry(plus:GetRenderSystem(), iso, geo, mat)
 	end
 
-	t_new = gs.time.now_us()
+	t_new = hg.time_to_us_f(hg.time_now())
 	table.insert(bench_create_geo, t_new - t_ref)
 
 	return geo
 end
 
 --
-gs.MountFileDriver(gs.StdFileDriver("../_data/"), "@data/")
+hg.MountFileDriver(hg.StdFileDriver("../_data/"), "@data/")
 
-plus = gs.GetPlus()
+plus = hg.GetPlus()
 plus:RenderInit(1280, 720)
 
 mat = plus:LoadMaterial("@core/materials/default.mat")
-fps = gs.FPSController(w / 2, h / 2, -100)
+fps = hg.FPSController(w / 2, h / 2, -100)
 
 --
 scn = plus:NewScene()
-cam = plus:AddCamera(scn, gs.Matrix4.TranslationMatrix({0, 1, -10}))
-plus:AddLight(scn, gs.Matrix4.RotationMatrix({0.6, -0.4, 0}), gs.Light.Model_Linear, 300)
+cam = plus:AddCamera(scn, hg.Matrix4.TranslationMatrix(hg.Vector3(0, 1, -10)))
+plus:AddLight(scn, hg.Matrix4.RotationMatrix(hg.Vector3(0.6, -0.4, 0)), hg.LightModelLinear, 300)
 plus:AddPlane(scn)
 
 renderable_system = scn:GetRenderableSystem()
 
 a = 0
-while not plus:KeyPress(gs.InputDevice.KeyEscape) do
+while not plus:IsAppEnded() do
 	local dt = plus:UpdateClock()
 	fps:UpdateAndApplyToNode(cam, dt)
 
 	local geo = update_field(a)
-	a = a + dt:to_sec() * 0.5
+	a = a + hg.time_to_sec_f(dt) * 0.5
 
-	renderable_system:DrawGeometry(geo, gs.Matrix4.Identity)
+	renderable_system:DrawGeometry(geo, hg.Matrix4.Identity)
 
 	plus:UpdateScene(scn, dt)
 
-	draw_bench(bench_fill_field, gs.Color.Red)
-	draw_bench(bench_polygonise, gs.Color.Green)
-	draw_bench(bench_create_geo, gs.Color.Blue)
+	draw_bench(bench_fill_field, hg.Color.Red)
+	draw_bench(bench_polygonise, hg.Color.Green)
+	draw_bench(bench_create_geo, hg.Color.Blue)
 
-	plus:Text2D(800, 45, "Update scalar field", 16, gs.Color.Red)
-	plus:Text2D(800, 25, "Polygonise scalar field", 16, gs.Color.Green)
-	plus:Text2D(800, 5, "Prepare render geometry", 16, gs.Color.Blue)
+	plus:Text2D(800, 45, "Update scalar field", 16, hg.Color.Red)
+	plus:Text2D(800, 25, "Polygonise scalar field", 16, hg.Color.Green)
+	plus:Text2D(800, 5, "Prepare render geometry", 16, hg.Color.Blue)
 
-	plus:Text2D(5, 25, string.format("Iso-surface @%.2fFPS (%d triangle)", 1 / dt:to_sec(), iso:GetTriangleCount()))
+	plus:Text2D(5, 25, string.format("Iso-surface @%.2fFPS (%d triangle)", 1 / hg.time_to_sec_f(dt), iso:GetTriangleCount()))
 	plus:Text2D(5, 5, "Move around with QSZD, left mouse button to look around")
 
 	plus:Flip()
+	plus:EndFrame()
 end
+
+plus:RenderUninit()

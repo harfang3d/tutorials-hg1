@@ -3,76 +3,85 @@
 -- Note: This sample is not performance oriented and does not represent
 --		the most efficient way to replay a movie using the Harfang API.
 
-gs.MountFileDriver(gs.StdFileDriver("../_data/"), "@data")
+hg = require("harfang")
+
+hg.LoadPlugins()
+
+hg.MountFileDriver(hg.StdFileDriver("_data/"), "@data")
+
+width, height = 960, 540
 
 -- initialize graphic and audio systems
-al = gs.ALMixer()
-al:Open()
+plus = hg.GetPlus()
+plus:RenderInit(width, height)
+plus:AudioInit()
 
-gpu = gs.EglRenderer()
-gpu:Open(960, 540)
-
-render_system = gs.RenderSystem()
-render_system:Initialize(gpu)
+renderer = plus:GetRenderer()
+mixer = plus:GetMixer()
 
 -- open movie and retrieve video format
-movie = gs.WebMMovie()
-if not movie:Open("@data/film_blender_ToS-4k-1920.webm") then
+movie = hg.CreateMovie()
+if not movie:Open(renderer, mixer, "@data/videoplayer-demo-harfang-60fps.webm") then
 	print("Unsupported movie format")
 end
 
-video_format = movie:GetVideoData():GetFormat()
-
--- create the frame textures and frame object
-y_tex = gpu:NewTexture()
-gpu:CreateTexture(y_tex, video_format.width, video_format.height, gs.GpuTexture.R8, gs.GpuTexture.NoAA, gs.GpuTexture.UsageDefault, false)
-u_tex = gpu:NewTexture()
-gpu:CreateTexture(u_tex, video_format.width / 2, video_format.height / 2, gs.GpuTexture.R8, gs.GpuTexture.NoAA, gs.GpuTexture.UsageDefault, false)
-v_tex = gpu:NewTexture()
-gpu:CreateTexture(v_tex, video_format.width / 2, video_format.height / 2, gs.GpuTexture.R8, gs.GpuTexture.NoAA, gs.GpuTexture.UsageDefault, false)
-
-frame = gs.VideoFrame()
-video_format:ClearFrame(frame)
-video_timestamp = gs.time(0) -- assume first frame time stamp is 0
-
 -- load the YV12 to RGB shader and setup drawing states
-shader = gpu:LoadShader("@data/yv12.isl")
+shader = renderer:LoadShader("@data/yv12.isl")
 
-gpu:EnableDepthTest(false) -- disable depth testing so that we don't even need to clear the screen
+-- create index buffer
+data = hg.BinaryData()
+data:WriteUInt16(0)
+data:WriteUInt16(1)
+data:WriteUInt16(2)
+data:WriteUInt16(3)
+data:WriteUInt16(4)
+data:WriteUInt16(5)
 
--- start streaming the movie audio data
-channel = al:StreamData(movie:GetAudioData())
+idx = renderer:NewBuffer()
+renderer:CreateBuffer(idx, data, hg.GpuBufferIndex)
+
+-- Create vertex buffer
+vtx_layout = hg.VertexLayout()
+vtx_layout:AddAttribute(hg.VertexPosition, 3, hg.VertexFloat)
+vtx_layout:AddAttribute(hg.VertexUV0, 2, hg.VertexFloat, true)
+
+data = hg.BinaryData()
+data:WriteFloats({0, 0, 0.5, 0, 1})
+data:WriteFloats({0, height, 0.5, 0, 0})
+data:WriteFloats({width, height, 0.5, 1, 0})
+data:WriteFloats({0, 0, 0.5, 0, 1})
+data:WriteFloats({width, height, 0.5, 1, 0})
+data:WriteFloats({width, 0, 0.5, 1, 1})
+
+vtx = renderer:NewBuffer()
+renderer:CreateBuffer(vtx, data, hg.GpuBufferVertex)
+
+renderer:EnableDepthTest(false) -- disable depth testing so that we don't even need to clear the screen
 
 -- play until movie ends
-while not movie:IsEOF() and not gs.GetKeyboard():WasPressed(gs.InputDevice.KeyEscape) do
-	-- fit the while output window
-	screen_size = gpu:GetCurrentOutputWindow():GetSize()
-	gpu:SetViewport(gs.fRect(0, 0, screen_size.x, screen_size.y))
-	gpu:Set2DMatrices() -- update the 2d matrix
+movie:Play()
+while not movie:IsEnded() and not plus:IsAppEnded() do
+	plus:Clear(hg.Color.Red)
+	
+	renderer:SetViewport(hg.Rect(0, 0, width, height))
+	renderer:Set2DMatrices() -- update the 2d matrices
 
-	-- fetch the next video frame once audio gets past video
-	audio_timestamp = al:GetChannelPosition(channel) -- audio timestamp as reported by the mixer
-
-	if audio_timestamp >= video_timestamp then
-		movie:GetVideoData():GetFrame(frame)
-		video_timestamp = frame:GetTimestamp()
-		gpu:BlitTexture(y_tex, frame:GetPlaneData(gs.VideoFrame.Y), video_format.width, video_format.height)
-		gpu:BlitTexture(u_tex, frame:GetPlaneData(gs.VideoFrame.U), video_format.width / 2, video_format.height / 2)
-		gpu:BlitTexture(v_tex, frame:GetPlaneData(gs.VideoFrame.V), video_format.width / 2, video_format.height / 2)
+	-- fetch the next video frame
+	ok, frame = movie:GetFrame()
+	-- draw the current video frame to screen
+	if frame:size() then
+		renderer:SetShader(shader)
+		hg.SetShaderEngineValues(plus:GetRenderSystem())
+		renderer:SetShaderTexture("y_tex", frame:at(0))
+		renderer:SetShaderTexture("u_tex", frame:at(1))
+		renderer:SetShaderTexture("v_tex", frame:at(2))
+		hg.DrawBuffers(renderer, 6, idx, vtx, vtx_layout)
 	end
 
-	-- draw the current video frame to screen
-	vtxs = {gs.Vector3(0, 0, 0.5), gs.Vector3(0, screen_size.y, 0.5), gs.Vector3(screen_size.x, screen_size.y, 0.5), gs.Vector3(0, 0, 0.5), gs.Vector3(screen_size.x, screen_size.y, 0.5), gs.Vector3(screen_size.x, 0, 0.5)}
-	uvs = {gs.Vector2(0, 1), gs.Vector2(0, 0), gs.Vector2(1, 0), gs.Vector2(0, 1), gs.Vector2(1, 0), gs.Vector2(1, 1)}
-
-	gpu:SetShader(shader)
-	gs.SetShaderEngineValues(render_system)
-	gpu:SetShaderTexture("y_tex", y_tex)
-	gpu:SetShaderTexture("u_tex", u_tex)
-	gpu:SetShaderTexture("v_tex", v_tex)
-	render_system:DrawTriangleUV(2, vtxs, uvs)
-
-	gpu:DrawFrame()
-	gpu:ShowFrame()
-	gpu:UpdateOutputWindow()
+	plus:Flip()
+	plus:EndFrame()
 end
+
+movie:Close()
+plus:AudioUninit()
+plus:RenderUninit()

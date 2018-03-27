@@ -1,5 +1,7 @@
-import gs
+import harfang as hg
 import math
+
+hg.LoadPlugins()
 
 # create a few bench objects
 bench_fill_field = []
@@ -9,12 +11,12 @@ bench_create_geo = []
 # setup iso field
 w, h, d = 100, 60, 30
 
-field = gs.BinaryBlob()
+field = hg.BinaryData()
 field.Grow(w * h * d)
 for i in range(w * h * d):
 	field.WriteFloat(0)
 
-iso = gs.IsoSurface()
+iso = hg.IsoSurface()
 
 
 def draw_bench(perf_hist, color):
@@ -38,7 +40,7 @@ def update_field(a):
 		o = (w * d * y + w * z + x) * 4
 		field.WriteFloatAt(v, o)
 
-	t_ref = gs.time.now_us()
+	t_ref = hg.time_to_us_f(hg.time_now())
 	for i in range(0, 200):
 		a_rad = i * (math.pi / 180) * 2
 
@@ -48,74 +50,77 @@ def update_field(a):
 
 		write_to_field(x, y, z, 6)
 
-	gs.BinaryBlobBlur3d(field, w, h, d)
+	hg.BinaryDataBlur3d(field, w, h, d)
 
-	t_new = gs.time.now_us()
+	t_new = hg.time_to_us_f(hg.time_now())
 	bench_fill_field.append(t_new - t_ref)
 
 	# polygonise
 	t_ref = t_new
 
-	iso.Clear(False)  # keep storage to minimize heap allocations
-	gs.PolygoniseIsoSurface(w, h, d, field, 1, iso)
+	iso.Clear()
+	hg.PolygoniseIsoSurface(w-2, h-2, d-2, field, 1, iso)
 
-	t_new = gs.time.now_us()
+	t_new = hg.time_to_us_f(hg.time_now())
 	bench_polygonise.append(t_new - t_ref)
 
 	# convert to render geometry
 	t_ref = t_new
 
 	if False:  # slow path through core geometry
-		geo = gs.CoreGeometry()
-		gs.IsoSurfaceToCoreGeometry(iso, geo)
+		geo = hg.CoreGeometry()
+		hg.IsoSurfaceToCoreGeometry(iso, geo)
 		geo = plus.CreateGeometry(geo, False)
 	else:
-		geo = gs.RenderGeometry()
-		gs.IsoSurfaceToRenderGeometry(plus.GetRenderSystem(), iso, geo, mat)
+		geo = hg.RenderGeometry()
+		hg.IsoSurfaceToRenderGeometry(plus.GetRenderSystem(), iso, geo, mat)
 
-	t_new = gs.time.now_us()
+	t_new = hg.time_to_us_f(hg.time_now())
 	bench_create_geo.append(t_new - t_ref)
 
 	return geo
 
 #
-gs.MountFileDriver(gs.StdFileDriver("../_data/"), "@data/")
+hg.MountFileDriver(hg.StdFileDriver("../_data/"), "@data/")
 
-plus = gs.GetPlus()
+plus = hg.GetPlus()
 plus.RenderInit(1280, 720)
 
 mat = plus.LoadMaterial("@core/materials/default.mat")
-fps = gs.FPSController(w / 2, h / 2, -100)
+fps = hg.FPSController(w / 2, h / 2, -100)
 
 #
 scn = plus.NewScene()
-cam = plus.AddCamera(scn, gs.Matrix4.TranslationMatrix((0, 1, -10)))
-plus.AddLight(scn, gs.Matrix4.RotationMatrix((0.6, -0.4, 0)), gs.Light.Model_Linear, 300)
+cam = plus.AddCamera(scn, hg.Matrix4.TranslationMatrix(hg.Vector3(0, 1, -10)))
+plus.AddLight(scn, hg.Matrix4.RotationMatrix(hg.Vector3(0.6, -0.4, 0)), hg.LightModelLinear, 300)
 plus.AddPlane(scn)
 
 renderable_system = scn.GetRenderableSystem()
 
 a = 0
-while not plus.KeyPress(gs.InputDevice.KeyEscape):
+while not plus.IsAppEnded():
 	dt = plus.UpdateClock()
 	fps.UpdateAndApplyToNode(cam, dt)
 
 	geo = update_field(a)
-	a += dt.to_sec() * 0.5
+	a += hg.time_to_sec_f(dt) * 0.5
 
-	renderable_system.DrawGeometry(geo, gs.Matrix4.Identity)
+	renderable_system.DrawGeometry(geo, hg.Matrix4.Identity)
 
 	plus.UpdateScene(scn, dt)
 
-	draw_bench(bench_fill_field, gs.Color.Red)
-	draw_bench(bench_polygonise, gs.Color.Green)
-	draw_bench(bench_create_geo, gs.Color.Blue)
+	draw_bench(bench_fill_field, hg.Color.Red)
+	draw_bench(bench_polygonise, hg.Color.Green)
+	draw_bench(bench_create_geo, hg.Color.Blue)
 
-	plus.Text2D(800, 45, "Update scalar field", 16, gs.Color.Red)
-	plus.Text2D(800, 25, "Polygonise scalar field", 16, gs.Color.Green)
-	plus.Text2D(800, 5, "Prepare render geometry", 16, gs.Color.Blue)
+	plus.Text2D(800, 45, "Update scalar field", 16, hg.Color.Red)
+	plus.Text2D(800, 25, "Polygonise scalar field", 16, hg.Color.Green)
+	plus.Text2D(800, 5, "Prepare render geometry", 16, hg.Color.Blue)
 
-	plus.Text2D(5, 25, "Iso-surface @%.2fFPS (%d triangle)" % (1 / dt.to_sec(), iso.GetTriangleCount()))
+	plus.Text2D(5, 25, "Iso-surface @%.2fFPS (%d triangle)" % (1 / hg.time_to_sec_f(dt), iso.GetTriangleCount()))
 	plus.Text2D(5, 5, "Move around with QSZD, left mouse button to look around")
 
 	plus.Flip()
+	plus.EndFrame()
+
+plus.RenderUninit()

@@ -1,20 +1,24 @@
 -- Stream an audio file using the OpenAL mixer
 
-gs.LoadPlugins()
+hg = require("harfang")
+
+hg.LoadPlugins()
 
 -- mount the system file driver
-gs.MountFileDriver(gs.StdFileDriver())
+hg.MountFileDriver(hg.StdFileDriver())
 
--- create an OpenAL mixer
-al = gs.ALMixer()
-al:Open()
+-- create a new mixer
+mixer = hg.CreateMixer()
+mixer:Open()
 
 -- start streaming
-channel = al:Stream('../_data/skaven.it')
+channel = mixer:Stream('../_data/skaven.it')
 
 -- wait until the user decides to exit the program or the stream ends
 print('Playing on channel '..channel..', press Ctrl+C to stop.')
 
-while al:GetPlayState(channel) == gs.MixerPlaying do
-	gs.Sleep(1)
+while mixer:GetPlayState(channel) == hg.MixerPlaying do
+	hg.Sleep(hg.time_from_ms(100))
 end
+
+mixer:Close()

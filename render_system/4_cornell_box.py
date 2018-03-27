@@ -1,124 +1,137 @@
 # Reconstruct and display the famous Cornell box, 
 # which is a test scene commonly used to demonstrate radiosity.
 
-import gs
-import gs.plus.geometry
+import harfang as hg
 import math
 
 box_width = 5.5
 box_height = 5.6
 light_width = box_width * 0.25
 
+# load Harfang plugins (renderer, image loader, etc...)
+hg.LoadPlugins()
+
 # mount the runtime package required for the rendering
-gs.GetFilesystem().Mount(gs.StdFileDriver("../_data/"))
+hg.MountFileDriver(hg.StdFileDriver("_data"))
 
 # create the renderer
-renderer = gs.EglRenderer()
-renderer.Open(720, 720)
+renderer = hg.CreateRenderer()
+renderer.Open()
 
-render_system = gs.RenderSystem()
+# open a new window
+win = hg.NewWindow(800, 600)
+
+# create a new output surface for the newly opened window
+surface = renderer.NewOutputSurface(win)
+renderer.SetOutputSurface(surface)
+
+# initialize the render system, which is used to draw through the renderer
+render_system = hg.RenderSystem()
 render_system.Initialize(renderer)
 
-scene = gs.Scene()
-scene.SetupCoreSystemsAndComponents(render_system)
+# create scene
+scene = hg.Scene()
+hg.SceneSetupCoreSystemsAndComponents(scene, render_system)
 
-env = gs.Environment()
-env.SetBackgroundColor(gs.Color.Black)
-env.SetAmbientColor(gs.Color.White)
+env = hg.Environment()
+env.SetBackgroundColor(hg.Color.Black)
+env.SetAmbientColor(hg.Color.White)
 env.SetAmbientIntensity(0.1)
 scene.AddComponent(env)
 
 # light Source Definition
-node_light = gs.Node()
+node_light = hg.Node()
 
-light_transform = gs.Transform()
-light_transform.SetPosition(gs.Vector3(0.0, box_height * 0.825, 0.0))
+light_transform = hg.Transform()
+light_transform.SetPosition(hg.Vector3(0.0, box_height * 0.825, 0.0))
 node_light.AddComponent(light_transform)
 
-light_component = gs.Light()
-light_component.SetDiffuseColor(gs.Color(1, 0.9, 0.7))
+light_component = hg.Light()
+light_component.SetDiffuseColor(hg.Color(1, 0.9, 0.7))
 light_component.SetRange(box_width * 10.0)
-light_component.SetShadow(gs.Light.Shadow_Map)
+light_component.SetShadow(hg.LightShadowMap)
 node_light.AddComponent(light_component)
 
 scene.AddNode(node_light)
 
-
 # wall definitions
-def create_wall(pos = gs.Vector3(), rot = gs.Vector3(), width = 1.0, length = 1.0, material_path = None):
+def create_wall(pos = hg.Vector3(), rot = hg.Vector3(), width = 1.0, length = 1.0, material_path = "material_diffuse_color.mat", name="dummy"):
 	""" generic function to create a wall """
-	node = gs.Node()
-	transform = gs.Transform()
+	node = hg.Node()
+	transform = hg.Transform()
 	transform.SetPosition(pos)
 	transform.SetRotation(rot)
 	node.AddComponent(transform)
-	object = gs.Object()
-	object.SetGeometry(render_system.CreateGeometry(gs.plus.geometry.create_plane(width = width, length = length, material_path = material_path)))
+	object = hg.Object()
+	object.SetGeometry(render_system.CreateGeometry(hg.CreatePlane(width, length, 1, material_path, name)))
 	node.AddComponent(object)
 	return node
 
 
 # light source geometry
-scene.AddNode(create_wall(pos = gs.Vector3(0, box_height * 0.995, 0), rot = gs.Vector3(math.pi,0,0),
+scene.AddNode(create_wall(pos = hg.Vector3(0, box_height * 0.995, 0), rot = hg.Vector3(math.pi,0,0),
 							width = light_width, length = light_width,
-							material_path = "material_self_color.mat"))
+							material_path = "material_self_color.mat", name="light"))
 
 # floor
-scene.AddNode(create_wall(width = box_width, length = box_width))
+scene.AddNode(create_wall(width = box_width, length = box_width, name="floor"))
 
 # ceiling
-scene.AddNode(create_wall(pos = gs.Vector3(0, box_height, 0), rot = gs.Vector3(math.pi,0,0),
-							width = box_width, length = box_width))
+scene.AddNode(create_wall(pos = hg.Vector3(0, box_height, 0), rot = hg.Vector3(math.pi,0,0),
+							width = box_width, length = box_width, name="ceiling"))
 
 # back_wall
-scene.AddNode(create_wall(pos = gs.Vector3(0, box_height * 0.5, box_width * 0.5), rot = gs.Vector3(math.pi * -0.5, 0, 0),
-							width = box_width, length = box_height))
+scene.AddNode(create_wall(pos = hg.Vector3(0, box_height * 0.5, box_width * 0.5), rot = hg.Vector3(math.pi * -0.5, 0, 0),
+							width = box_width, length = box_height, name="back"))
 
 # right_wall
-scene.AddNode(create_wall(pos = gs.Vector3(box_width * 0.5, box_height * 0.5, 0), rot = gs.Vector3(0, 0, math.pi * 0.5),
+scene.AddNode(create_wall(pos = hg.Vector3(box_width * 0.5, box_height * 0.5, 0), rot = hg.Vector3(0, 0, math.pi * 0.5),
 							width = box_height, length = box_width,
-							material_path = "material_diffuse_color_green.mat"))
+							material_path = "material_diffuse_color_green.mat", name="right"))
 
 # left_wall
-scene.AddNode(create_wall(pos = gs.Vector3(-box_width * 0.5, box_height * 0.5, 0), rot = gs.Vector3(0, 0, math.pi * -0.5),
+scene.AddNode(create_wall(pos = hg.Vector3(-box_width * 0.5, box_height * 0.5, 0), rot = hg.Vector3(0, 0, math.pi * -0.5),
 							width = box_height, length = box_width,
-							material_path = "material_diffuse_color_red.mat"))
+							material_path = "material_diffuse_color_red.mat", name="left"))
 
 
 # box definitions
-def create_box(pos = gs.Vector3(), rot = gs.Vector3(), width = 1.0, height = 1.0):
-	node = gs.Node()
-	object = gs.Object()
-	transform = gs.Transform()
-	transform.SetPosition(pos + gs.Vector3(0, height * 0.5, 0))
+def create_box(pos = hg.Vector3(), rot = hg.Vector3(), width = 1.0, height = 1.0):
+	node = hg.Node()
+	object = hg.Object()
+	transform = hg.Transform()
+	transform.SetPosition(pos + hg.Vector3(0, height * 0.5, 0))
 	transform.SetRotation(rot)
 	node.AddComponent(transform)
-	object.SetGeometry(render_system.CreateGeometry(gs.plus.geometry.create_cube(width, height, width)))
+	object.SetGeometry(render_system.CreateGeometry(hg.CreateCube(width, height, width)))
 	node.AddComponent(object)
 	return node
 
 
 # short box definition
-scene.AddNode(create_box(pos = gs.Vector3(box_width * 0.18, 0, box_width * -0.25),
-						rot = gs.Vector3(0, math.pi * 0.085, 0),
+scene.AddNode(create_box(pos = hg.Vector3(box_width * 0.18, 0, box_width * -0.25),
+						rot = hg.Vector3(0, math.pi * 0.085, 0),
 						width = box_width * 0.3, height = box_height * 0.3))
 
 # tall box definition
-scene.AddNode(create_box(pos = gs.Vector3(box_width * -0.18, 0, box_width * 0.25),
-						rot = gs.Vector3(0, math.pi * -0.085, 0),
+scene.AddNode(create_box(pos = hg.Vector3(box_width * -0.18, 0, box_width * 0.25),
+						rot = hg.Vector3(0, math.pi * -0.085, 0),
 						width = box_width * 0.35, height = box_height * 0.65))
 
 # set up the camera position and field of view for the usual view of the box
-node_camera = gs.Node()
-camera_transform = gs.Transform()
-camera_transform.SetPosition(gs.Vector3(0.0, box_height * 0.5, -box_width * 2.25))
+node_camera = hg.Node()
+camera_transform = hg.Transform()
+camera_transform.SetPosition(hg.Vector3(0.0, box_height * 0.5, -box_width * 2.25))
 node_camera.AddComponent(camera_transform)
-node_camera.AddComponent(gs.Camera())
+node_camera.AddComponent(hg.Camera())
 scene.AddNode(node_camera)
 scene.SetCurrentCamera(node_camera)
 
+# get keyboard device
+keyboard = hg.GetInputSystem().GetDevice("keyboard")
+
 # main rendering loop
-while renderer.GetDefaultOutputWindow():
+while hg.IsWindowOpen(win) and (not keyboard.WasPressed(hg.KeyEscape)):
 	scene.Update()
 	scene.WaitUpdate()
 
@@ -126,4 +139,7 @@ while renderer.GetDefaultOutputWindow():
 	scene.WaitCommit()
 
 	renderer.ShowFrame()
-	renderer.UpdateOutputWindow()
+
+	hg.UpdateWindow(win)
+
+	hg.EndFrame()

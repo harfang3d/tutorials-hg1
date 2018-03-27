@@ -1,6 +1,11 @@
-plus = gs.GetPlus()
+hg = require("harfang")
+
+hg.LoadPlugins()
+
+plus = hg.GetPlus()
 plus:RenderInit(400, 300)
 
-while not plus:KeyPress(gs.InputDevice.KeyEscape) do
+while not plus:IsAppEnded() do
 	plus:Flip()
+	plus:EndFrame()
 end

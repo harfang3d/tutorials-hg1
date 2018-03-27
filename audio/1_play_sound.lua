@@ -1,21 +1,25 @@
 -- Load an audio file as a static sound and replay it
 
-gs.LoadPlugins()
+hg = require("harfang")
+
+hg.LoadPlugins()
 
 -- mount the system file driver
-gs.MountFileDriver(gs.StdFileDriver())
+hg.MountFileDriver(hg.StdFileDriver())
 
--- create an OpenAL mixer
-al = gs.ALMixer()
-al:Open()
+-- create a new sound mixer
+mixer = hg.CreateMixer()
+mixer:Open()
 
 -- load a sound
-sound = al:LoadSound('../_data/good_evening.wav')
+sound = mixer:LoadSound("../_data/good_evening.wav")
 
 -- play the sound
-channel = al:Start(sound)
+channel = mixer:Start(sound)
 print("Sound playing on channel: "..channel)
 
-while al:GetPlayState(channel) == gs.MixerPlaying do
-	gs.Sleep(1)
+while mixer:GetPlayState(channel) == hg.MixerPlaying do
+	hg.Sleep(hg.time_from_ms(100))
 end
+
+mixer:Close()
