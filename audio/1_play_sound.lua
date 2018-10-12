@@ -12,7 +12,7 @@ mixer = hg.CreateMixer()
 mixer:Open()
 
 -- load a sound
-sound = mixer:LoadSound("../_data/good_evening.wav")
+sound = mixer:LoadSound("_data/good_evening.wav")
 
 -- play the sound
 channel = mixer:Start(sound)

@@ -117,3 +117,6 @@ while hg.IsWindowOpen(win) and (not keyboard.WasPressed(hg.KeyEscape)):
 	hg.UpdateWindow(win)
 
 	hg.EndFrame()
+
+render_system.Free()
+renderer.Close()

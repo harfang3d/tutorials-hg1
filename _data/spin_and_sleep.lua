@@ -1,7 +1,7 @@
 function Update()
 	-- spin
 	local rot = this:GetTransform():GetRotation()
-	rot.z = rot.z + engine.dt
+	rot.z = rot.z + engine:GetClockDt()
 	this:GetTransform():SetRotation(rot)
 
 	-- sleep

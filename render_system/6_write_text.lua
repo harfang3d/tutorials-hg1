@@ -49,3 +49,6 @@ while hg.IsWindowOpen(win) and (not keyboard:WasPressed(hg.KeyEscape)) do
 	hg.EndFrame()
 end
 font = None
+
+render_system:Free()
+renderer:Close()

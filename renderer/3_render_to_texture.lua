@@ -99,3 +99,7 @@ while hg.IsWindowOpen(win) and (not keyboard:WasPressed(hg.KeyEscape)) do
 
 	hg.EndFrame()
 end
+
+renderer:DestroyOutputSurface(surface)
+hg.DestroyWindow(win)
+renderer:Close()

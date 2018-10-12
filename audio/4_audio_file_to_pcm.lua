@@ -6,7 +6,7 @@ hg.LoadPlugins()
 hg.MountFileDriver(hg.StdFileDriver())
 
 -- open input file as an audio data source
-src = hg.GetAudioIO():Open('../_data/skaven.it')
+src = hg.GetAudioIO():Open('_data/skaven.it')
 
 -- open output file
 out = hg.GetFilesystem():Open('skaven.pcm', hg.FileWrite)

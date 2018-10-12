@@ -29,7 +29,10 @@ nav_sys = hg.NavigationSystem()
 nav_sys.SetDebugVisuals(False)
 scn.AddSystem(nav_sys)
 
-geo = hg.LoadGeometry("maze/maze.geo")
+geo = hg.Geometry()
+ok = hg.LoadGeometry(geo, "maze/maze.geo")
+if not ok:
+	exit()
 nav_geo = hg.CreateNavigationGeometry(geo, nav_sys.GetConfig())
 
 nav = hg.Navigation()

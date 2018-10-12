@@ -12,7 +12,7 @@ mixer = hg.CreateMixer()
 mixer:Open()
 
 -- start streaming
-channel = mixer:Stream('../_data/skaven.it')
+channel = mixer:Stream('_data/skaven.it')
 
 -- wait until the user decides to exit the program or the stream ends
 print('Playing on channel '..channel..', press Ctrl+C to stop.')

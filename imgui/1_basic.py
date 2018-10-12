@@ -18,6 +18,7 @@ renderer.SetOutputSurface(surface)
 keyboard = hg.GetInputSystem().GetDevice("keyboard")
 
 check = True
+open = True
 combo = 0
 color = hg.Color(1, 0, 1)
 
@@ -27,7 +28,8 @@ while hg.IsWindowOpen(win) and not keyboard.WasPressed(hg.KeyEscape):
 	if hg.ImGuiBegin("GUI"):
 		_,check = hg.ImGuiCheckbox("Check", check)
 
-		if hg.ImGuiCollapsingHeader("Header", True):
+		_,open = hg.ImGuiCollapsingHeader("Header", open)
+		if _:
 			if hg.ImGuiButton("Button"):
 				print("Button pressed")
 		

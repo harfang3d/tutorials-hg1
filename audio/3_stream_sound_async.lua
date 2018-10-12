@@ -12,7 +12,7 @@ mixer = hg.MixerAsync(hg.CreateMixer())
 mixer:Open()
 
 -- start streaming
-future_channel = mixer:Stream('../_data/skaven.it')
+future_channel = mixer:Stream('_data/skaven.it')
 
 -- future_channel contains a FutureInt, this means that it will contain the channel the stream is playing on once the
 -- mixer thread has executed the Stream call. the FutureInt get method blocks the caller until the value is available
