@@ -55,8 +55,8 @@ scene:AddNode(node_light)
 
 -- wall definitions
 function create_wall(args)
-    local pos = args.pos or hg.Vector3()
-    local rot = args.rot or hg.Vector3()
+    local pos = args.pos or hg.Vector3.Zero
+    local rot = args.rot or hg.Vector3.Zero
     local width = args.width or 1.0
     local length = args.length or 1.0
     local material_path = args.material_path or "material_diffuse_color.mat"

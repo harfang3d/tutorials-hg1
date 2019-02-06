@@ -55,7 +55,7 @@ node_light.AddComponent(light_component)
 scene.AddNode(node_light)
 
 # wall definitions
-def create_wall(pos = hg.Vector3(), rot = hg.Vector3(), width = 1.0, length = 1.0, material_path = "material_diffuse_color.mat", name="dummy"):
+def create_wall(pos = hg.Vector3.Zero, rot = hg.Vector3.Zero, width = 1.0, length = 1.0, material_path = "material_diffuse_color.mat", name="dummy"):
 	""" generic function to create a wall """
 	node = hg.Node()
 	transform = hg.Transform()
