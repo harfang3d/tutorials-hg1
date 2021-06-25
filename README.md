@@ -1,5 +1,8 @@
 # HARFANG® Tutorials
 
+## WARNING
+This project is aimed at HARFANG® 3D engine version 1.x.x. It is now superseded by [HARFANG® 3D 2.0](https://www.harfang3d.com). Please check the [updated tutorials/code snippets](https://github.com/harfang3d/tutorials-hg2).
+
 These **tutorials** demonstrate the usage of the HARFANG API in **Python** and **Lua**.
 If you want to know more about HARFANG, please visit the [official website](https://www.harfang3d.com).
 
